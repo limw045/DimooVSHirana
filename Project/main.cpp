@@ -8,10 +8,10 @@ extern "C" {
 #endif
 void APIENTRY glutKeyboardUpFunc(void (*func)(unsigned char key, int x, int y));
 void APIENTRY glutSpecialUpFunc(void (*func)(int key, int x, int y));
-void APIENTRY glutIgnoreKeyRepeat(int ignore);
 #ifdef __cplusplus
 }
 #endif
+
 
 
 // 全局游戏控制对象
@@ -91,11 +91,11 @@ int main(int argc, char** argv) {
     glutIdleFunc(idle);
 
     // 注册键盘按下与松开（以便实现多按键无延迟输入缓冲）
-    glutIgnoreKeyRepeat(1); // 忽略按键的硬件重复触发
     glutKeyboardFunc(keyboard);
     glutKeyboardUpFunc(keyboardUp);
     glutSpecialFunc(special);
     glutSpecialUpFunc(specialUp);
+
 
     // 4. 初始化全局 OpenGL 渲染特性
     glEnable(GL_DEPTH_TEST);
