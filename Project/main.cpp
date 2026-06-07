@@ -13,7 +13,9 @@ static float lastTime = 0.0f;
 // 渲染回调
 void display() {
     game.draw();
+    glutSwapBuffers(); // 交换前后缓冲区，使画面可见
 }
+
 
 // 物理与逻辑状态更新回调
 void idle() {
