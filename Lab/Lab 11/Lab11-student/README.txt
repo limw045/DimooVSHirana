@@ -1,0 +1,1 @@
+If you move your folder to other path, please make sure to redo the steps in Task1B --> add LINK library for libjpeg.dll.a and add DIRECTORIES for CGLab11Utils

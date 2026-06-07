@@ -1,0 +1,14 @@
+# Compilation outputs
+*.exe
+*.o
+*.obj
+
+# Code::Blocks build folders and local settings
+bin/
+obj/
+*.layout
+*.depend
+
+# Temporary files
+*~
+*.tmp
