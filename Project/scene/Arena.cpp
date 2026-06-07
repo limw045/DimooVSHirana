@@ -310,8 +310,8 @@ void Arena::drawBox() {
     glDisable(GL_TEXTURE_2D);
 
     glDisable(GL_LIGHTING);
-    glColor4f(0.35f, 0.45f, 0.38f, 0.8f);
-    glLineWidth(2.0f);
+    glColor3f(0.25f, 0.38f, 0.28f); // 更有生机的藤蔓绿
+    glLineWidth(3.0f);
     glBegin(GL_LINE_STRIP);
     for (int i = 0; i < 20; i++) {
         float theta = (float)i * 0.15f;
@@ -321,6 +321,20 @@ void Arena::drawBox() {
     }
     glEnd();
     glLineWidth(1.0f);
+
+    // 绘制叶子三角形
+    glColor3f(0.35f, 0.52f, 0.38f);
+    glBegin(GL_TRIANGLES);
+    for (int i = 2; i < 18; i += 2) {
+        float theta = (float)i * 0.15f;
+        float zCoord = -halfD + (float)i * 0.3f;
+        float yCoord = 1.0f + sin(theta) * 0.8f + (float)i * 0.1f;
+        
+        glVertex3f(halfW - 0.015f, yCoord, zCoord);
+        glVertex3f(halfW - 0.015f, yCoord + 0.12f, zCoord - 0.06f);
+        glVertex3f(halfW - 0.015f, yCoord + 0.04f, zCoord + 0.08f);
+    }
+    glEnd();
     glEnable(GL_LIGHTING);
     glPopMatrix();
 
@@ -357,6 +371,91 @@ void Arena::drawBox() {
     glEnd();
     glLineWidth(1.0f);
     glEnable(GL_LIGHTING);
+
+    // --- 5. 纸箱盖耳/折边 (Box Flaps - Folds Outwards) ---
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, cardboardTex);
+    glColor3f(0.82f, 0.76f, 0.70f); // 牛皮纸内壁颜色
+
+    // Left Flap
+    glPushMatrix();
+    glTranslatef(-halfW, height, 0.0f);
+    glRotatef(-30.0f, 0.0f, 0.0f, 1.0f); // 向外折 30 度
+    glBegin(GL_QUADS);
+    glNormal3f(0.0f, 1.0f, 0.0f);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(0.0f, 0.0f,  halfD);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(-0.7f, 0.0f,  halfD);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(-0.7f, 0.0f, -halfD);
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(0.0f, 0.0f, -halfD);
+    glEnd();
+    glPopMatrix();
+
+    // Right Flap
+    glPushMatrix();
+    glTranslatef(halfW, height, 0.0f);
+    glRotatef(30.0f, 0.0f, 0.0f, 1.0f); // 向外折 30 度
+    glBegin(GL_QUADS);
+    glNormal3f(0.0f, 1.0f, 0.0f);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(0.0f, 0.0f, -halfD);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f(0.7f, 0.0f, -halfD);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f(0.7f, 0.0f,  halfD);
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(0.0f, 0.0f,  halfD);
+    glEnd();
+    glPopMatrix();
+
+    // Front Flap (Transparent front wall fold-down flap)
+    glPushMatrix();
+    glTranslatef(0.0f, height, halfD);
+    glRotatef(45.0f, 1.0f, 0.0f, 0.0f); // 向外折 45 度
+    glBegin(GL_QUADS);
+    glNormal3f(0.0f, 1.0f, 0.0f);
+    glTexCoord2f(0.0f, 0.0f); glVertex3f(-halfW, 0.0f, 0.0f);
+    glTexCoord2f(1.0f, 0.0f); glVertex3f( halfW, 0.0f, 0.0f);
+    glTexCoord2f(1.0f, 1.0f); glVertex3f( halfW, 0.7f, 0.0f);
+    glTexCoord2f(0.0f, 1.0f); glVertex3f(-halfW, 0.7f, 0.0f);
+    glEnd();
+    glPopMatrix();
+
+    // --- 6. 纸箱底面 POP MART 水印与细节 ---
+    glDisable(GL_LIGHTING);
+    glEnable(GL_BLEND);
+    glColor4f(0.85f, 0.78f, 0.68f, 0.35f); // 柔和的半透明金色水印
+    
+    // 双环圆圈
+    glPushMatrix();
+    glTranslatef(0.0f, 0.003f, 0.0f);
+    glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
+    glLineWidth(2.5f);
+    glBegin(GL_LINE_LOOP);
+    for (int i = 0; i < 40; i++) {
+        float theta = 2.0f * (float)M_PI * (float)i / 40.0f;
+        glVertex2f(0.8f * cos(theta), 0.8f * sin(theta));
+    }
+    glEnd();
+    glLineWidth(1.0f);
+
+    glBegin(GL_LINE_LOOP);
+    for (int i = 0; i < 40; i++) {
+        float theta = 2.0f * (float)M_PI * (float)i / 40.0f;
+        glVertex2f(0.68f * cos(theta), 0.68f * sin(theta));
+    }
+    glEnd();
+    
+    // 水印皇冠标志
+    glBegin(GL_POLYGON);
+    glVertex2f(-0.15f, -0.08f);
+    glVertex2f(0.15f, -0.08f);
+    glVertex2f(0.18f, 0.15f);
+    glVertex2f(0.08f, 0.03f);
+    glVertex2f(0.0f, 0.22f);
+    glVertex2f(-0.08f, 0.03f);
+    glVertex2f(-0.18f, 0.15f);
+    glEnd();
+    glPopMatrix();
+    
+    glDisable(GL_BLEND);
+    glEnable(GL_LIGHTING);
+    glDisable(GL_TEXTURE_2D);
 }
 
 void Arena::drawLid() {
@@ -521,22 +620,64 @@ void Arena::drawTransparent() {
 }
 
 void drawRosePattern(float wallX, float wallHeight) {
-    glColor3f(0.95f, 0.82f, 0.1f);
+    // 1. 金色闪烁星星 (GL_POINTS)
+    glColor3f(0.98f, 0.95f, 0.6f);
     glPointSize(5.0f);
     glBegin(GL_POINTS);
-    glVertex3f(wallX + 0.01f, 1.5f, -1.8f);
-    glVertex3f(wallX + 0.01f, 2.5f,  0.5f);
-    glVertex3f(wallX + 0.01f, 3.2f, -0.8f);
-    glVertex3f(wallX + 0.01f, 0.8f,  2.0f);
-    glVertex3f(wallX + 0.01f, 4.0f,  1.8f);
+    glVertex3f(wallX + 0.01f, 3.8f, -1.5f);
+    glVertex3f(wallX + 0.01f, 4.2f,  0.8f);
+    glVertex3f(wallX + 0.01f, 3.0f, -0.5f);
+    glVertex3f(wallX + 0.01f, 2.5f,  1.8f);
+    glVertex3f(wallX + 0.01f, 1.8f, -1.2f);
     glEnd();
     glPointSize(1.0f);
 
-    glColor4f(0.85f, 0.08f, 0.08f, 0.8f);
+    // 2. 剪纸风金色弯月
+    glPushMatrix();
+    glTranslatef(wallX + 0.015f, 3.5f, 0.0f);
+    glRotatef(90.0f, 0.0f, 1.0f, 0.0f); // 旋转以贴在左壁上
+    
+    // 金色实心圆
+    glColor3f(0.95f, 0.82f, 0.1f);
+    drawSolidCircle(0.0f, 0.0f, 0.35f, 16);
+    
+    // 用壁面底色 (深绿色) 压盖一个圆，削出完美的弯月
+    glColor3f(0.15f, 0.38f, 0.22f);
+    drawSolidCircle(0.12f, 0.06f, 0.32f, 16);
+    glPopMatrix();
+
+    // 3. 精细红玫瑰印刷图案 (带螺线描边与绿叶)
     glPushMatrix();
     glTranslatef(wallX + 0.01f, 0.0f, 0.0f);
     glRotatef(90.0f, 0.0f, 1.0f, 0.0f);
-    drawSolidCircle(-1.0f, 2.2f, 0.22f, 12);
-    drawSolidCircle( 1.0f, 1.5f, 0.25f, 12);
+    
+    // 玫瑰1：红色花朵
+    glColor3f(0.85f, 0.08f, 0.08f);
+    drawSolidCircle(-1.0f, 2.0f, 0.22f, 12);
+    // 玫瑰1：粉色花瓣螺旋线
+    glColor3f(0.98f, 0.32f, 0.32f);
+    glLineWidth(2.0f);
+    glBegin(GL_LINE_STRIP);
+    for (int i = 0; i < 10; i++) {
+        float r = 0.03f + i * 0.016f;
+        float th = i * 1.5f;
+        glVertex2f(-1.0f + r * cos(th), 2.0f + r * sin(th));
+    }
+    glEnd();
+    
+    // 玫瑰2：红色花朵
+    glColor3f(0.85f, 0.08f, 0.08f);
+    drawSolidCircle(1.0f, 1.5f, 0.25f, 12);
+    // 玫瑰2：粉色螺旋线
+    glColor3f(0.98f, 0.32f, 0.32f);
+    glBegin(GL_LINE_STRIP);
+    for (int i = 0; i < 10; i++) {
+        float r = 0.03f + i * 0.018f;
+        float th = i * 1.5f;
+        glVertex2f(1.0f + r * cos(th), 1.5f + r * sin(th));
+    }
+    glEnd();
+    glLineWidth(1.0f);
+    
     glPopMatrix();
 }

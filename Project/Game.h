@@ -44,6 +44,26 @@ public:
     float dimooVy;
     bool dimooFacingRight;
 
+    // 战斗与回合属性
+    float hironoHp, hironoMaxHp;
+    float dimooHp, dimooMaxHp;
+    float matchTimer;
+    bool matchOver;
+
+    // 粒子系统
+    struct GameParticle {
+        float x, y, z;
+        float vx, vy, vz;
+        float r, g, b, a;
+        float size;
+        float life;
+        float maxLife;
+    };
+    std::vector<GameParticle> particles;
+
+    void spawnHitSparks(float x, float y, float z, int count, float r, float g, float b);
+    void spawnDust(float x, float y, float z, int count);
+
 private:
     void updateBattle(float dt);
     void drawDebugOverlay();
