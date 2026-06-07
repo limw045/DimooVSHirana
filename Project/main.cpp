@@ -2,16 +2,6 @@
 #include "Game.h"
 #include <iostream>
 
-// 手动声明缺失的 GLUT APIs，以防头文件定义过旧但链接库包含这些API
-#ifdef __cplusplus
-extern "C" {
-#endif
-void APIENTRY glutKeyboardUpFunc(void (*func)(unsigned char key, int x, int y));
-void APIENTRY glutSpecialUpFunc(void (*func)(int key, int x, int y));
-#ifdef __cplusplus
-}
-#endif
-
 
 
 // 全局游戏控制对象
@@ -56,23 +46,14 @@ void reshape(int width, int height) {
 
 // 键盘普通按键按下
 void keyboard(unsigned char key, int x, int y) {
-    game.handleInput(key, true);
-}
-
-// 键盘普通按键松开
-void keyboardUp(unsigned char key, int x, int y) {
-    game.handleInput(key, false);
+    game.handleInput(key);
 }
 
 // 特殊按键 (方向键、功能键) 按下
 void special(int key, int x, int y) {
-    game.handleSpecialInput(key, true);
+    game.handleSpecialInput(key);
 }
 
-// 特殊按键松开
-void specialUp(int key, int x, int y) {
-    game.handleSpecialInput(key, false);
-}
 
 int main(int argc, char** argv) {
     // 1. 初始化 GLUT 窗口
@@ -90,11 +71,10 @@ int main(int argc, char** argv) {
     glutReshapeFunc(reshape);
     glutIdleFunc(idle);
 
-    // 注册键盘按下与松开（以便实现多按键无延迟输入缓冲）
+    // 注册键盘按下回调
     glutKeyboardFunc(keyboard);
-    glutKeyboardUpFunc(keyboardUp);
     glutSpecialFunc(special);
-    glutSpecialUpFunc(specialUp);
+
 
 
     // 4. 初始化全局 OpenGL 渲染特性

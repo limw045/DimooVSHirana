@@ -16,8 +16,9 @@ public:
     void draw();
 
     // 键盘按键与松开回调
-    void handleInput(unsigned char key, bool pressed);
-    void handleSpecialInput(int key, bool pressed);
+    void handleInput(unsigned char key);
+    void handleSpecialInput(int key);
+
 
     // 属性
     GameState currentState;

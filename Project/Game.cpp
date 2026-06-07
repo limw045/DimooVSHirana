@@ -109,19 +109,7 @@ void Game::update(float dt) {
 }
 
 void Game::updateBattle(float dt) {
-    float moveSpeed = 2.8f;
 
-    // 1. 移动控制：P1 小野 (W/A/S/D)
-    if (input.hirono_left)  hironoX -= moveSpeed * dt;
-    if (input.hirono_right) hironoX += moveSpeed * dt;
-    if (input.hirono_up)    hironoZ -= moveSpeed * dt;
-    if (input.hirono_down)  hironoZ += moveSpeed * dt;
-
-    // 2. 移动控制：P2 Dimoo (方向键)
-    if (input.dimoo_left)  dimooX -= moveSpeed * dt;
-    if (input.dimoo_right) dimooX += moveSpeed * dt;
-    if (input.dimoo_up)    dimooZ -= moveSpeed * dt;
-    if (input.dimoo_down)  dimooZ += moveSpeed * dt;
 
     // 3. 边界碰撞限制 (防止跑出纸盒底面)
     float borderW = BOX_WIDTH / 2.0f - 0.4f; // 扣除碰撞半径
@@ -297,45 +285,40 @@ void Game::drawHUD() {
     glMatrixMode(GL_MODELVIEW);
 }
 
-void Game::handleInput(unsigned char key, bool pressed) {
+void Game::handleInput(unsigned char key) {
+    float step = 0.15f;
     switch (key) {
         // Player 1 (小野) 移动
-        case 'a': case 'A': input.hirono_left = pressed; break;
-        case 'd': case 'D': input.hirono_right = pressed; break;
-        case 'w': case 'W': input.hirono_up = pressed; break;
-        case 's': case 'S': input.hirono_down = pressed; break;
+        case 'a': case 'A': hironoX -= step; break;
+        case 'd': case 'D': hironoX += step; break;
+        case 'w': case 'W': hironoZ -= step; break;
+        case 's': case 'S': hironoZ += step; break;
 
         // 交互测试键
         case 'h': case 'H':
-            if (pressed) {
-                // 给干燥剂包一个随机冲量
-                arena.desiccant.vx = ((rand() % 200) / 100.0f - 1.0f) * 5.0f;
-                arena.desiccant.vz = ((rand() % 200) / 100.0f - 1.0f) * 5.0f;
-                std::cout << "[Debug] Kicked desiccant bag!" << std::endl;
-            }
+            // 给干燥剂包一个随机冲量
+            arena.desiccant.vx = ((rand() % 200) / 100.0f - 1.0f) * 5.0f;
+            arena.desiccant.vz = ((rand() % 200) / 100.0f - 1.0f) * 5.0f;
+            std::cout << "[Debug] Kicked desiccant bag!" << std::endl;
             break;
 
         case 'p': case 'P':
-            if (pressed) {
-                // 抛飞说明书
-                arena.testExplodeProps();
-                std::cout << "[Debug] Threw pamphlet folding paper!" << std::endl;
-            }
+            // 抛飞说明书
+            arena.testExplodeProps();
+            std::cout << "[Debug] Threw pamphlet folding paper!" << std::endl;
             break;
 
         case 'e': case 'E':
-            if (pressed) {
-                // 模拟撞击左壁
-                arena.triggerWallShake(0.5f, true);
-                camera.applyShake(0.18f);
-                std::cout << "[Debug] Triggered left wall collision shake!" << std::endl;
-            }
+            // 模拟撞击左壁
+            arena.triggerWallShake(0.5f, true);
+            camera.applyShake(0.18f);
+            std::cout << "[Debug] Triggered left wall collision shake!" << std::endl;
             break;
 
         // 状态转换与跳过
         case ' ':
         case 13: // Enter 回车键
-            if (pressed && currentState == STATE_TITLE) {
+            if (currentState == STATE_TITLE) {
                 currentState = STATE_ENTRY_ANIMATION;
                 stateTimer = 0.0f;
                 std::cout << "[Game] Box unboxing started!" << std::endl;
@@ -343,10 +326,8 @@ void Game::handleInput(unsigned char key, bool pressed) {
             break;
 
         case 'r': case 'R':
-            if (pressed) {
-                init();
-                std::cout << "[Game] Restarted!" << std::endl;
-            }
+            init();
+            std::cout << "[Game] Restarted!" << std::endl;
             break;
 
         case 27: // ESC
@@ -355,24 +336,23 @@ void Game::handleInput(unsigned char key, bool pressed) {
     }
 }
 
-void Game::handleSpecialInput(int key, bool pressed) {
+void Game::handleSpecialInput(int key) {
+    float step = 0.15f;
     switch (key) {
         // Player 2 (Dimoo) 移动
-        case GLUT_KEY_LEFT:  input.dimoo_left = pressed; break;
-        case GLUT_KEY_RIGHT: input.dimoo_right = pressed; break;
-        case GLUT_KEY_UP:    input.dimoo_up = pressed; break;
-        case GLUT_KEY_DOWN:  input.dimoo_down = pressed; break;
+        case GLUT_KEY_LEFT:  dimooX -= step; break;
+        case GLUT_KEY_RIGHT: dimooX += step; break;
+        case GLUT_KEY_UP:    dimooZ -= step; break;
+        case GLUT_KEY_DOWN:  dimooZ += step; break;
 
-        // F4 ~ F8 调试热键 (仅在按下时触发)
+        // F4 ~ F8 调试热键
         case GLUT_KEY_F4:
-            if (pressed) {
-                showColliders = !showColliders;
-                std::cout << "[Debug] Toggle colliders view: " << (showColliders ? "ON" : "OFF") << std::endl;
-            }
+            showColliders = !showColliders;
+            std::cout << "[Debug] Toggle colliders view: " << (showColliders ? "ON" : "OFF") << std::endl;
             break;
 
         case GLUT_KEY_F5:
-            if (pressed && (currentState == STATE_TITLE || currentState == STATE_ENTRY_ANIMATION)) {
+            if (currentState == STATE_TITLE || currentState == STATE_ENTRY_ANIMATION) {
                 currentState = STATE_BATTLE;
                 stateTimer = 0.0f;
                 std::cout << "[Debug] Skipped entry animation to Battle state!" << std::endl;
@@ -380,29 +360,23 @@ void Game::handleSpecialInput(int key, bool pressed) {
             break;
 
         case GLUT_KEY_F6:
-            if (pressed) {
-                // 强制 P1 (小野占位符) 撞左墙
-                hironoX = -BOX_WIDTH / 2.0f + 0.4f;
-                arena.triggerWallShake(0.5f, true);
-                camera.applyShake(0.20f);
-                std::cout << "[Debug] Teleported P1 to left wall & shook screen!" << std::endl;
-            }
+            // 强制 P1 (小野占位符) 撞左墙
+            hironoX = -BOX_WIDTH / 2.0f + 0.4f;
+            arena.triggerWallShake(0.5f, true);
+            camera.applyShake(0.20f);
+            std::cout << "[Debug] Teleported P1 to left wall & shook screen!" << std::endl;
             break;
 
         case GLUT_KEY_F7:
-            if (pressed) {
-                // 模拟大招对后盖和盒子的冲击
-                arena.triggerLidShake(45.0f);
-                camera.applyShake(0.35f);
-                std::cout << "[Debug] Triggered ultimate impact on cardboard lid!" << std::endl;
-            }
+            // 模拟大招对后盖和盒子的冲击
+            arena.triggerLidShake(45.0f);
+            camera.applyShake(0.35f);
+            std::cout << "[Debug] Triggered ultimate impact on cardboard lid!" << std::endl;
             break;
 
         case GLUT_KEY_F8:
-            if (pressed) {
-                isDummyAI = !isDummyAI;
-                std::cout << "[Debug] Dummy AI: " << (isDummyAI ? "ACTIVE" : "INACTIVE") << std::endl;
-            }
+            isDummyAI = !isDummyAI;
+            std::cout << "[Debug] Dummy AI: " << (isDummyAI ? "ACTIVE" : "INACTIVE") << std::endl;
             break;
     }
 }
