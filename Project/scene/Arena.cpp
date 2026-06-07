@@ -253,19 +253,50 @@ void Arena::drawBox() {
     float halfD = BOX_DEPTH / 2.0f;
     float height = BOX_HEIGHT;
 
-    // 启用纹理
-    glEnable(GL_TEXTURE_2D);
-    glBindTexture(GL_TEXTURE_2D, cardboardTex);
-
     // --- 1. 盒底 (地板) ---
-    GLfloat mat_floor_specular[] = { 0.1f, 0.1f, 0.1f, 1.0f };
+    glDisable(GL_TEXTURE_2D); // 禁用纹理，使用纯白色纸板
+    GLfloat mat_floor_specular[] = { 0.05f, 0.05f, 0.05f, 1.0f };
     glMaterialfv(GL_FRONT, GL_SPECULAR, mat_floor_specular);
-    glColor3f(0.97f, 0.96f, 0.94f); // 暖白色纸板色
+    glColor3f(0.96f, 0.95f, 0.93f); // 纯净的暖白色纸板色
+    glBegin(GL_QUADS);
     glNormal3f(0.0f, 1.0f, 0.0f);
-    drawTexturedQuad(-halfW, 0.0f,  halfD,
-                      halfW, 0.0f,  halfD,
-                      halfW, 0.0f, -halfD,
-                     -halfW, 0.0f, -halfD, 2.0f, 2.0f);
+    glVertex3f(-halfW, 0.0f,  halfD);
+    glVertex3f( halfW, 0.0f,  halfD);
+    glVertex3f( halfW, 0.0f, -halfD);
+    glVertex3f(-halfW, 0.0f, -halfD);
+    glEnd();
+
+    // 绘制地板的水印 (POP MART 圆形 Logo) 和压痕折线
+    glDisable(GL_LIGHTING);
+    glEnable(GL_BLEND);
+    glColor4f(0.86f, 0.84f, 0.81f, 0.6f); // 浅灰褐色水印色
+    
+    // 绘制中心圆形水印
+    glPushMatrix();
+    glTranslatef(0.0f, 0.002f, 0.0f); // 稍微抬高避免 Z-fighting
+    glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
+    // 绘制圆环
+    glLineWidth(2.0f);
+    glBegin(GL_LINE_LOOP);
+    for (int i = 0; i < 40; i++) {
+        float theta = 2.0f * (float)M_PI * (float)i / 40.0f;
+        glVertex2f(0.7f * cos(theta), 0.7f * sin(theta));
+    }
+    glEnd();
+    glLineWidth(1.0f);
+    glPopMatrix();
+    
+    // 绘制对角折痕 (Crease lines)
+    glBegin(GL_LINES);
+    glVertex3f(-halfW, 0.002f,  halfD); glVertex3f(-halfW + 0.8f, 0.002f,  halfD - 0.8f);
+    glVertex3f( halfW, 0.002f,  halfD); glVertex3f( halfW - 0.8f, 0.002f,  halfD - 0.8f);
+    glVertex3f( halfW, 0.002f, -halfD); glVertex3f( halfW - 0.8f, 0.002f, -halfD + 0.8f);
+    glVertex3f(-halfW, 0.002f, -halfD); glVertex3f(-halfW + 0.8f, 0.002f, -halfD + 0.8f);
+    glEnd();
+    
+    glDisable(GL_BLEND);
+    glEnable(GL_LIGHTING);
+
 
     // 禁用纹理，以便绘制盒壁内侧的图案
     glDisable(GL_TEXTURE_2D);
