@@ -35,9 +35,14 @@ public:
     bool showColliders;
     bool isDummyAI;
 
-    // 临时角色坐标（第一阶段用作占位符）
+    // 临时角色坐标与速度（2.5D版）
     float hironoX, hironoY, hironoZ;
+    float hironoVy;
+    bool hironoFacingRight;
+
     float dimooX, dimooY, dimooZ;
+    float dimooVy;
+    bool dimooFacingRight;
 
 private:
     void updateBattle(float dt);

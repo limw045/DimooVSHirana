@@ -15,9 +15,9 @@
 // 竞技场尺寸常量
 const float BOX_WIDTH = 6.0f;
 const float BOX_HEIGHT = 5.0f;
-const float BOX_DEPTH = 6.0f;
+const float BOX_DEPTH = 6.0f; // 3D 盒子的前后深度
 
-// 游戏状态枚举
+// 游戏状态
 enum GameState {
     STATE_TITLE,
     STATE_ENTRY_ANIMATION,
@@ -26,7 +26,7 @@ enum GameState {
     STATE_RESULT
 };
 
-// 角色动画状态枚举
+// 角色动画状态
 enum AnimState {
     ANIM_ENTRY,
     ANIM_IDLE,
@@ -38,43 +38,33 @@ enum AnimState {
     ANIM_DEFEAT
 };
 
-// 输入缓冲结构体
+// 输入缓冲（仅保留 2D 左右移动和跳跃）
 struct InputState {
     // Player 1 (小野)
     bool hirono_left;
     bool hirono_right;
-    bool hirono_up;
-    bool hirono_down;
-    bool hirono_skill1_pressed;
-    bool hirono_skill3_pressed;
+    bool hirono_up; // 跳跃
 
     // Player 2 (Dimoo)
     bool dimoo_left;
     bool dimoo_right;
-    bool dimoo_up;
-    bool dimoo_down;
-    bool dimoo_skill1_pressed;
-    bool dimoo_skill3_pressed;
+    bool dimoo_up;  // 跳跃
 
     InputState() {
-        hirono_left = hirono_right = hirono_up = hirono_down = false;
-        hirono_skill1_pressed = hirono_skill3_pressed = false;
-        dimoo_left = dimoo_right = dimoo_up = dimoo_down = false;
-        dimoo_skill1_pressed = dimoo_skill3_pressed = false;
+        hirono_left = hirono_right = hirono_up = false;
+        dimoo_left = dimoo_right = dimoo_up = false;
     }
 };
 
-// 碰撞体定义（XZ平面圆形 + Y轴高度）
+// 2D 碰撞体定义（X-Y 轴圆圈，格斗碰撞判定）
 struct Collider {
-    float x, z;
+    float x, y;
     float radius;
-    float yMin, yMax;
 
-    Collider() : x(0), z(0), radius(0.4f), yMin(0), yMax(1.2f) {}
-    Collider(float r, float ymin, float ymax) : x(0), z(0), radius(r), yMin(ymin), yMax(ymax) {}
+    Collider() : x(0), y(0), radius(0.4f) {}
+    Collider(float r) : x(0), y(0), radius(r) {}
 };
 
-// 简易数学辅助函数
 inline float clamp(float val, float minVal, float maxVal) {
     if (val < minVal) return minVal;
     if (val > maxVal) return maxVal;

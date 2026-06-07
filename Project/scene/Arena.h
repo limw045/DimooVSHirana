@@ -5,46 +5,44 @@
 
 // 盒盖物理状态结构体
 struct LidPhysics {
-    float angle;        // 当前旋转角度（相对于后壁顶边）
-    float velocity;     // 旋转角速度
-    float restAngle;    // 静止时的角度（默认半开 115 度）
-    float damping;      // 阻尼系数
-    float springK;      // 弹簧恢复系数
+    float angle;
+    float velocity;
+    float restAngle;
+    float damping;
+    float springK;
 
     LidPhysics() : angle(115.0f), velocity(0.0f), restAngle(115.0f), damping(4.0f), springK(25.0f) {}
 };
 
-// 气泡纸单元状态
+// 气泡纸单元状态 (在 Z=0 附近排成一排作为2D踏板)
 struct BubbleCell {
-    float x, z;
-    float pressDepth;     // 下压深度（0.0为正常，1.0为完全压扁）
+    float x, y;
+    float pressDepth;
     float pressVelocity;
     bool popped;
 
-    BubbleCell() : x(0), z(0), pressDepth(0), pressVelocity(0), popped(false) {}
+    BubbleCell() : x(0), y(0.005f), pressDepth(0), pressVelocity(0), popped(false) {}
 };
 
-// 产品说明书折纸状态
+// 2D 悬浮/飘落产品说明书
 struct Pamphlet {
-    float x, y, z;
-    float vx, vy, vz;
-    float rotX, rotY, rotZ;
-    float rotVX, rotVY, rotVZ;
+    float x, y;
+    float vx, vy;
+    float rot;            // 2D 旋转角
+    float rotV;
     bool isFlying;
-    float foldAngle;      // 0.0 为完全折叠，1.0 为展开
+    float foldAngle;      // 0=对折，1=展开
 
-    Pamphlet() : x(1.0f), y(0.01f), z(-0.5f), vx(0), vy(0), vz(0),
-                 rotX(0), rotY(0), rotZ(0), rotVX(0), rotVY(0), rotVZ(0),
-                 isFlying(false), foldAngle(0.0f) {}
+    Pamphlet() : x(1.0f), y(0.2f), vx(0), vy(0), rot(0), rotV(0), isFlying(false), foldAngle(0.0f) {}
 };
 
-// 干燥剂包状态
+// 2D 滑行干燥剂
 struct Desiccant {
-    float x, y, z;
-    float vx, vz;
+    float x, y;           // 2D 坐标
+    float vx;
     bool popped;
 
-    Desiccant() : x(2.0f), y(0.05f), z(1.5f), vx(0), vz(0), popped(false) {}
+    Desiccant() : x(1.8f), y(0.12f), vx(0), popped(false) {}
 };
 
 class Arena {
@@ -56,21 +54,16 @@ public:
     void update(float dt);
     
     // 渲染方法
-    void drawOpaque();       // 绘制不透明底座、盒壁、道具
-    void drawTransparent();  // 绘制半透明前壁、地面雾气
+    void drawOpaque();       // 绘制 3D 盒体 + 2D 纸片道具不透明部分
+    void drawTransparent();  // 绘制半透明层
 
-    // 交互触发器
+    // 交互触发
     void triggerWallShake(float intensity, bool leftWall);
     void triggerLidShake(float intensity);
-    void testExplodeProps(); // 调试用：引爆场景道具
-
-    // 获取碰撞边界
-    float getWidth() const { return BOX_WIDTH; }
-    float getDepth() const { return BOX_DEPTH; }
-    float getHeight() const { return BOX_HEIGHT; }
+    void testExplodeProps();
 
     // 碰撞检测与响应
-    void resolveCollisionWithProps(float charX, float charZ, float radius, float& outPushX, float& outPushZ);
+    void resolveCollisionWithProps(float charX, float charY, float radius, float& outPushX);
 
     // 场景物理参数
     LidPhysics lid;
@@ -78,7 +71,7 @@ public:
     Pamphlet pamphlet;
     Desiccant desiccant;
 
-    // 盒壁震动偏移（用于渲染）
+    // 盒壁震动
     float leftWallOffset;
     float rightWallOffset;
     float leftWallShakeTime;
@@ -89,6 +82,8 @@ public:
     unsigned int woodTex;
     unsigned int roseLabelTex;
     unsigned int starrySkyTex;
+    unsigned int hironoFaceTex;
+    unsigned int dimooFaceTex;
 
 private:
     void drawBox();

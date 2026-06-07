@@ -10,8 +10,8 @@ public:
 
     void init();
     
-    // 根据角色位置动态更新相机位置（XZ平面中点及距离缩放）
-    void update(float dt, float char1X, float char1Z, float char2X, float char2Z, bool isUltActive);
+    // 根据角色位置动态更新相机位置（XY平面中点及距离缩放）
+    void update(float dt, float char1X, float char1Y, float char2X, float char2Y, bool isUltActive);
     
     // 应用视图变换矩阵 (调用 gluLookAt)
     void applyMatrix();
