@@ -110,11 +110,11 @@ Arena::Arena() {
 
     initHolesAndBeams();
 
-    // Place bubble cells as a playable packing liner across the main fight lane.
-    float startX = -3.15f;
-    for (int c = 0; c < 28; ++c) {
+    // Place bubble cells as a full-floor packing liner inside the box.
+    float startX = -4.50f;
+    for (int c = 0; c < 91; ++c) {
         BubbleCell cell;
-        cell.x = startX + (c % 14) * 0.48f;
+        cell.x = startX + (c % 13) * 0.75f;
         cell.y = 0.005f;
         cell.pressDepth = 0.0f;
         cell.pressVelocity = 0.0f;
@@ -1535,42 +1535,42 @@ void Arena::drawTransparent() {
     glEnable(GL_BLEND);
     glDepthMask(GL_FALSE);
 
-    // Bubble wrap liner: a low, playable packing layer under the fight lane.
-    glColor4f(0.72f, 0.88f, 0.78f, 0.16f);
+    // Bubble wrap liner: a low, playable packing layer covering the box floor.
+    glColor4f(0.72f, 0.88f, 0.82f, 0.13f);
     glBegin(GL_QUADS);
     glNormal3f(0.0f, 1.0f, 0.0f);
-    glVertex3f(-3.55f, 0.012f,  0.46f);
-    glVertex3f( 3.55f, 0.012f,  0.46f);
-    glVertex3f( 3.55f, 0.012f, -0.46f);
-    glVertex3f(-3.55f, 0.012f, -0.46f);
+    glVertex3f(-4.95f, 0.012f,  2.35f);
+    glVertex3f( 4.95f, 0.012f,  2.35f);
+    glVertex3f( 4.95f, 0.012f, -2.35f);
+    glVertex3f(-4.95f, 0.012f, -2.35f);
     glEnd();
 
-    glColor4f(1.0f, 1.0f, 1.0f, 0.12f);
+    glColor4f(1.0f, 1.0f, 1.0f, 0.09f);
     glBegin(GL_LINE_LOOP);
-    glVertex3f(-3.55f, 0.018f,  0.46f);
-    glVertex3f( 3.55f, 0.018f,  0.46f);
-    glVertex3f( 3.55f, 0.018f, -0.46f);
-    glVertex3f(-3.55f, 0.018f, -0.46f);
+    glVertex3f(-4.95f, 0.018f,  2.35f);
+    glVertex3f( 4.95f, 0.018f,  2.35f);
+    glVertex3f( 4.95f, 0.018f, -2.35f);
+    glVertex3f(-4.95f, 0.018f, -2.35f);
     glEnd();
 
     for (size_t i = 0; i < bubbles.size(); ++i) {
         if (bubbles[i].popped) continue;
-        int row = (int)(i / 14);
-        float bubbleZ = (row == 0) ? -0.22f : 0.22f;
+        int row = (int)(i / 13);
+        float bubbleZ = -2.10f + row * 0.70f;
         float pressScale = 1.0f - bubbles[i].pressDepth * 0.72f;
 
-        glColor4f(0.78f, 0.95f, 0.84f, 0.36f);
+        glColor4f(0.78f, 0.95f, 0.88f, 0.24f);
         glPushMatrix();
-        glTranslatef(bubbles[i].x, 0.060f, bubbleZ);
-        glScalef(1.0f, 0.34f * pressScale, 1.0f);
-        glutSolidSphere(0.125f, 16, 10);
+        glTranslatef(bubbles[i].x, 0.050f, bubbleZ);
+        glScalef(1.0f, 0.28f * pressScale, 1.0f);
+        glutSolidSphere(0.155f, 16, 10);
         glPopMatrix();
 
         // Tiny white crescent highlight on each plastic dome.
-        glColor4f(1.0f, 1.0f, 1.0f, 0.18f);
+        glColor4f(1.0f, 1.0f, 1.0f, 0.12f);
         glBegin(GL_LINES);
-        glVertex3f(bubbles[i].x - 0.040f, 0.100f * pressScale, bubbleZ - 0.038f);
-        glVertex3f(bubbles[i].x + 0.032f, 0.104f * pressScale, bubbleZ - 0.064f);
+        glVertex3f(bubbles[i].x - 0.050f, 0.086f * pressScale, bubbleZ - 0.048f);
+        glVertex3f(bubbles[i].x + 0.040f, 0.090f * pressScale, bubbleZ - 0.080f);
         glEnd();
     }
 
