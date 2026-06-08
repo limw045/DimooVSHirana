@@ -50,15 +50,15 @@ void SimpleFlower::drawPetal(){
     glBegin(GL_QUADS);
         glColor3f(1.0f, 0.0f, 0.0f); // Red Petal
         
-        // Fatter Cartesian coordinates for the 10 petals (base y=+-0.90, tip y=+-0.60)
-        // Base: x = 1.90, y = +-0.90 (slightly overlapping for thickness)
-        // Tip:  x = 4.50, y = +-0.60 (fatter flat tip)
+        // Even fatter Cartesian coordinates for the 10 petals (base y=+-1.20, tip y=+-0.80)
+        // Base: x = 1.90, y = +-1.20 (overlapping for thick structure)
+        // Tip:  x = 4.50, y = +-0.80 (very fat flat tip)
         
         // Counter-clockwise vertex order
-        glVertex3f(1.90f, -0.90f, 0.0f); // Bottom-left (base)
-        glVertex3f(4.50f, -0.60f, 0.0f); // Bottom-right (tip)
-        glVertex3f(4.50f,  0.60f, 0.0f); // Top-right (tip)
-        glVertex3f(1.90f,  0.90f, 0.0f); // Top-left (base)
+        glVertex3f(1.90f, -1.20f, 0.0f); // Bottom-left (base)
+        glVertex3f(4.50f, -0.80f, 0.0f); // Bottom-right (tip)
+        glVertex3f(4.50f,  0.80f, 0.0f); // Top-right (tip)
+        glVertex3f(1.90f,  1.20f, 0.0f); // Top-left (base)
     glEnd();
     
     glEnable(GL_CULL_FACE);
