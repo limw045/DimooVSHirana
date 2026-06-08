@@ -50,20 +50,23 @@ void SimpleFlower::drawPetal(){
     glBegin(GL_QUADS);
         glColor3f(1.0f, 0.0f, 0.0f); // Red Petal
         
-        // Define petal shape using polar coordinates (trapezoid with radial sides)
-        // A width of 30 degrees (from -15 to +15 relative to local X-axis)
-        float angle = 15.0f * 3.14159265f / 180.0f;
-        float cosA = cos(angle);
-        float sinA = sin(angle);
+        // Symmetrical trapezoid with base touching neighboring petals
+        float angleIn = 22.5f * 3.14159265f / 180.0f;  // Touch at the base
+        float angleOut = 12.5f * 3.14159265f / 180.0f; // Taper at the tip
+        
+        float cosIn = cos(angleIn);
+        float sinIn = sin(angleIn);
+        float cosOut = cos(angleOut);
+        float sinOut = sin(angleOut);
         
         float rIn = 2.0f;     // Starts where the green disk ends (radius 2.0)
-        float rOut = 3.2f;    // Outer tip radius (length of petal)
+        float rOut = 5.5f;    // Outer tip radius (length of petal)
         
         // Counter-clockwise vertex order
-        glVertex3f(rIn * cosA, -rIn * sinA, 0.0f);
-        glVertex3f(rOut * cosA, -rOut * sinA, 0.0f);
-        glVertex3f(rOut * cosA, rOut * sinA, 0.0f);
-        glVertex3f(rIn * cosA, rIn * sinA, 0.0f);
+        glVertex3f(rIn * cosIn, -rIn * sinIn, 0.0f);
+        glVertex3f(rOut * cosOut, -rOut * sinOut, 0.0f);
+        glVertex3f(rOut * cosOut, rOut * sinOut, 0.0f);
+        glVertex3f(rIn * cosIn, rIn * sinIn, 0.0f);
     glEnd();
     
     glEnable(GL_CULL_FACE);
