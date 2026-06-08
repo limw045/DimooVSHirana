@@ -111,15 +111,23 @@ Arena::Arena() {
     initHolesAndBeams();
 
     // Place bubble cells as a full-floor packing liner inside the box.
-    float startX = -4.50f;
-    for (int c = 0; c < 91; ++c) {
-        BubbleCell cell;
-        cell.x = startX + (c % 13) * 0.75f;
-        cell.y = 0.005f;
-        cell.pressDepth = 0.0f;
-        cell.pressVelocity = 0.0f;
-        cell.popped = false;
-        bubbles.push_back(cell);
+    const int bubbleCols = 25;
+    const int bubbleRows = 9;
+    const float startX = -8.10f;
+    const float startZ = -2.40f;
+    const float stepX = 16.20f / (float)(bubbleCols - 1);
+    const float stepZ = 4.80f / (float)(bubbleRows - 1);
+    for (int row = 0; row < bubbleRows; ++row) {
+        for (int col = 0; col < bubbleCols; ++col) {
+            BubbleCell cell;
+            cell.x = startX + col * stepX;
+            cell.y = 0.005f;
+            cell.z = startZ + row * stepZ;
+            cell.pressDepth = 0.0f;
+            cell.pressVelocity = 0.0f;
+            cell.popped = false;
+            bubbles.push_back(cell);
+        }
     }
 }
 
@@ -367,10 +375,12 @@ void Arena::resolveCollisionWithProps(float charX, float charY, float radius, fl
     for (size_t i = 0; i < bubbles.size(); ++i) {
         if (bubbles[i].popped) continue;
         float dx = bubbles[i].x - charX;
-        if (std::abs(dx) < radius && charY < 0.1f) {
-            bubbles[i].pressDepth = 0.85f;
-            bubbles[i].pressVelocity = -3.5f;
-            if ((rand() % 100) < 3) {
+        float dz = bubbles[i].z;
+        float footDist = sqrt(dx * dx + dz * dz);
+        if (footDist < radius * 0.82f && charY < 0.1f) {
+            bubbles[i].pressDepth = 1.0f;
+            bubbles[i].pressVelocity = -5.0f;
+            if ((rand() % 100) < 2) {
                 bubbles[i].popped = true;
             }
         }
@@ -1532,45 +1542,104 @@ void Arena::drawOpaque() {
 void Arena::drawTransparent() {
     // Semi-transparent stubs like bubble wraps (close DepthMask, blend)
     glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_TEXTURE_BIT);
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_LIGHTING);
     glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDepthMask(GL_FALSE);
 
-    // Bubble wrap liner: a low, playable packing layer covering the box floor.
-    glColor4f(0.72f, 0.88f, 0.82f, 0.13f);
+    // Bubble wrap liner: a cool transparent membrane covering the box floor.
+    const float wrapMinX = -8.55f;
+    const float wrapMaxX =  8.55f;
+    const float wrapMinZ = -2.75f;
+    const float wrapMaxZ =  2.75f;
+    const float wrapY = 0.018f;
+
+    glColor4f(0.72f, 0.82f, 0.88f, 0.20f);
     glBegin(GL_QUADS);
     glNormal3f(0.0f, 1.0f, 0.0f);
-    glVertex3f(-4.95f, 0.012f,  2.35f);
-    glVertex3f( 4.95f, 0.012f,  2.35f);
-    glVertex3f( 4.95f, 0.012f, -2.35f);
-    glVertex3f(-4.95f, 0.012f, -2.35f);
+    glVertex3f(wrapMinX, wrapY, wrapMaxZ);
+    glVertex3f(wrapMaxX, wrapY, wrapMaxZ);
+    glVertex3f(wrapMaxX, wrapY, wrapMinZ);
+    glVertex3f(wrapMinX, wrapY, wrapMinZ);
     glEnd();
 
-    glColor4f(1.0f, 1.0f, 1.0f, 0.09f);
+    // Subtle sealed sheet edge and rolled plastic lips.
+    glLineWidth(2.0f);
+    glColor4f(0.95f, 0.98f, 1.0f, 0.24f);
     glBegin(GL_LINE_LOOP);
-    glVertex3f(-4.95f, 0.018f,  2.35f);
-    glVertex3f( 4.95f, 0.018f,  2.35f);
-    glVertex3f( 4.95f, 0.018f, -2.35f);
-    glVertex3f(-4.95f, 0.018f, -2.35f);
+    glVertex3f(wrapMinX, wrapY + 0.012f, wrapMaxZ);
+    glVertex3f(wrapMaxX, wrapY + 0.012f, wrapMaxZ);
+    glVertex3f(wrapMaxX, wrapY + 0.012f, wrapMinZ);
+    glVertex3f(wrapMinX, wrapY + 0.012f, wrapMinZ);
+    glEnd();
+
+    glColor4f(0.88f, 0.96f, 1.0f, 0.16f);
+    glBegin(GL_QUADS);
+    glVertex3f(wrapMinX, wrapY + 0.020f, wrapMaxZ);
+    glVertex3f(wrapMaxX, wrapY + 0.020f, wrapMaxZ);
+    glVertex3f(wrapMaxX, wrapY + 0.006f, wrapMaxZ - 0.10f);
+    glVertex3f(wrapMinX, wrapY + 0.006f, wrapMaxZ - 0.10f);
+    glVertex3f(wrapMinX, wrapY + 0.020f, wrapMinZ);
+    glVertex3f(wrapMaxX, wrapY + 0.020f, wrapMinZ);
+    glVertex3f(wrapMaxX, wrapY + 0.006f, wrapMinZ + 0.10f);
+    glVertex3f(wrapMinX, wrapY + 0.006f, wrapMinZ + 0.10f);
+    glEnd();
+
+    // Faint pressure seams and diagonal crinkles in the plastic sheet.
+    glLineWidth(1.0f);
+    glColor4f(1.0f, 1.0f, 1.0f, 0.10f);
+    glBegin(GL_LINES);
+    for (int c = 1; c < 25; ++c) {
+        float x = -8.10f + c * (16.20f / 24.0f);
+        glVertex3f(x, wrapY + 0.016f, wrapMinZ + 0.16f);
+        glVertex3f(x, wrapY + 0.016f, wrapMaxZ - 0.16f);
+    }
+    for (int r = 1; r < 9; ++r) {
+        float z = -2.40f + r * (4.80f / 8.0f);
+        glVertex3f(wrapMinX + 0.20f, wrapY + 0.016f, z);
+        glVertex3f(wrapMaxX - 0.20f, wrapY + 0.016f, z);
+    }
+    glColor4f(1.0f, 1.0f, 1.0f, 0.13f);
+    glVertex3f(-8.20f, wrapY + 0.022f, -2.45f);
+    glVertex3f(-4.40f, wrapY + 0.022f,  2.20f);
+    glVertex3f(-1.30f, wrapY + 0.022f, -2.55f);
+    glVertex3f( 2.10f, wrapY + 0.022f,  2.35f);
+    glVertex3f( 4.30f, wrapY + 0.022f, -2.35f);
+    glVertex3f( 8.20f, wrapY + 0.022f,  1.85f);
     glEnd();
 
     for (size_t i = 0; i < bubbles.size(); ++i) {
         if (bubbles[i].popped) continue;
-        int row = (int)(i / 13);
-        float bubbleZ = -2.10f + row * 0.70f;
-        float pressScale = 1.0f - bubbles[i].pressDepth * 0.72f;
+        float pressScale = 1.0f - bubbles[i].pressDepth * 0.76f;
+        float bubbleY = wrapY + 0.112f * pressScale;
 
-        glColor4f(0.78f, 0.95f, 0.88f, 0.24f);
+        glColor4f(0.74f, 0.86f, 0.92f, 0.31f);
         glPushMatrix();
-        glTranslatef(bubbles[i].x, 0.050f, bubbleZ);
-        glScalef(1.0f, 0.28f * pressScale, 1.0f);
-        glutSolidSphere(0.155f, 16, 10);
+        glTranslatef(bubbles[i].x, bubbleY, bubbles[i].z);
+        glScalef(1.0f, 0.58f * pressScale, 1.0f);
+        glutSolidSphere(0.178f, 18, 10);
         glPopMatrix();
 
-        // Tiny white crescent highlight on each plastic dome.
-        glColor4f(1.0f, 1.0f, 1.0f, 0.12f);
+        glColor4f(0.94f, 0.98f, 1.0f, 0.32f);
+        glBegin(GL_LINE_LOOP);
+        for (int s = 0; s < 24; ++s) {
+            float a = 2.0f * (float)M_PI * (float)s / 24.0f;
+            glVertex3f(bubbles[i].x + cos(a) * 0.188f,
+                       wrapY + 0.034f,
+                       bubbles[i].z + sin(a) * 0.188f);
+        }
+        glEnd();
+
+        glColor4f(1.0f, 1.0f, 1.0f, 0.28f);
         glBegin(GL_LINES);
-        glVertex3f(bubbles[i].x - 0.050f, 0.086f * pressScale, bubbleZ - 0.048f);
-        glVertex3f(bubbles[i].x + 0.040f, 0.090f * pressScale, bubbleZ - 0.080f);
+        glVertex3f(bubbles[i].x - 0.060f, bubbleY + 0.070f, bubbles[i].z - 0.060f);
+        glVertex3f(bubbles[i].x + 0.030f, bubbleY + 0.082f, bubbles[i].z - 0.090f);
+        glVertex3f(bubbles[i].x - 0.045f, bubbleY + 0.030f, bubbles[i].z + 0.020f);
+        glVertex3f(bubbles[i].x + 0.060f, bubbleY + 0.034f, bubbles[i].z + 0.062f);
+        glColor4f(0.86f, 0.94f, 1.0f, 0.18f);
+        glVertex3f(bubbles[i].x - 0.115f, bubbleY + 0.020f, bubbles[i].z - 0.020f);
+        glVertex3f(bubbles[i].x + 0.070f, bubbleY + 0.024f, bubbles[i].z - 0.005f);
         glEnd();
     }
 

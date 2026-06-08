@@ -22,12 +22,12 @@ struct LidPhysics {
  * @brief Represents a single bubble wrap element on the arena floor (kept as a skeleton).
  */
 struct BubbleCell {
-    float x, y;
+    float x, y, z;
     float pressDepth;
     float pressVelocity;
     bool popped;
 
-    BubbleCell() : x(0), y(0.005f), pressDepth(0), pressVelocity(0), popped(false) {}
+    BubbleCell() : x(0), y(0.005f), z(0), pressDepth(0), pressVelocity(0), popped(false) {}
 };
 
 /**
