@@ -111,7 +111,7 @@ Arena::Arena() {
     initHolesAndBeams();
 
     // Place bubble cells as a small bubble-wrap sheet on the left side of the box.
-    float startX = -BOX_WIDTH / 2.0f + 1.2f;
+    float startX = -4.55f;
     for (int c = 0; c < 24; ++c) {
         BubbleCell cell;
         cell.x = startX + (c % 8) * 0.28f;
@@ -1526,29 +1526,32 @@ void Arena::drawOpaque() {
     
     glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_LIGHTING_BIT);
 
-    // Product instructions leaflet: a tri-fold paper insert instead of a plain quad.
+    // Product instructions leaflet: a tri-fold paper insert placed where it is visible in the default view.
     if (pamphlet.isFlying || pamphlet.y <= 0.11f) {
         glPushMatrix();
-        glTranslatef(pamphlet.x, 0.035f + pamphlet.y * 0.20f, -0.72f);
+        glTranslatef(-3.65f + pamphlet.x * 0.12f, 0.080f + pamphlet.y * 0.20f, 1.75f);
         glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
-        glRotatef(pamphlet.rot * 0.35f + 8.0f, 0.0f, 0.0f, 1.0f);
+        glRotatef(pamphlet.rot * 0.35f - 8.0f, 0.0f, 0.0f, 1.0f);
+        glScalef(1.35f, 1.35f, 1.35f);
         drawFoldedInstructionLeaflet(pamphlet.foldAngle);
         glPopMatrix();
     }
     
     // Desiccant packet: printed sachet with crimped border and spill state.
     glPushMatrix();
-    glTranslatef(desiccant.x, 0.045f, 0.86f);
+    glTranslatef(3.15f + desiccant.x * 0.12f, 0.080f, 1.55f);
     glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
     glRotatef(-10.0f + desiccant.vx * 2.0f, 0.0f, 0.0f, 1.0f);
+    glScalef(1.45f, 1.45f, 1.45f);
     drawDesiccantPacketModel(desiccant.popped);
     glPopMatrix();
 
     // Replacement parts bag: a small clear pouch on the right side of the floor.
     glPushMatrix();
-    glTranslatef(4.15f, 0.040f, 0.60f);
+    glTranslatef(4.35f, 0.080f, 1.45f);
     glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
     glRotatef(-12.0f, 0.0f, 0.0f, 1.0f);
+    glScalef(1.35f, 1.35f, 1.35f);
     drawReplacementPartsBagModel();
     glPopMatrix();
 
@@ -1565,31 +1568,31 @@ void Arena::drawTransparent() {
     glColor4f(0.50f, 0.72f, 0.58f, 0.32f);
     glBegin(GL_QUADS);
     glNormal3f(0.0f, 1.0f, 0.0f);
-    glVertex3f(-7.95f, 0.006f,  0.62f);
-    glVertex3f(-5.25f, 0.006f,  0.62f);
-    glVertex3f(-5.25f, 0.006f, -0.55f);
-    glVertex3f(-7.95f, 0.006f, -0.55f);
+    glVertex3f(-4.85f, 0.012f,  2.15f);
+    glVertex3f(-1.75f, 0.012f,  2.15f);
+    glVertex3f(-1.75f, 0.012f,  0.70f);
+    glVertex3f(-4.85f, 0.012f,  0.70f);
     glEnd();
 
     for (size_t i = 0; i < bubbles.size(); ++i) {
         if (bubbles[i].popped) continue;
         int col = (int)(i % 8);
         int row = (int)(i / 8);
-        float bubbleZ = -0.40f + row * 0.42f;
+        float bubbleZ = 0.92f + row * 0.50f;
         float pressScale = 1.0f - bubbles[i].pressDepth * 0.72f;
 
         glColor4f(0.75f, 0.96f, 0.84f, 0.58f);
         glPushMatrix();
-        glTranslatef(bubbles[i].x, 0.045f, bubbleZ);
+        glTranslatef(bubbles[i].x, 0.080f, bubbleZ);
         glScalef(1.0f, 0.34f * pressScale, 1.0f);
-        glutSolidSphere(0.105f, 14, 8);
+        glutSolidSphere(0.135f, 16, 10);
         glPopMatrix();
 
         // Tiny white crescent highlight on each plastic dome.
         glColor4f(1.0f, 1.0f, 1.0f, 0.30f);
         glBegin(GL_LINES);
-        glVertex3f(bubbles[i].x - 0.035f, 0.083f * pressScale, bubbleZ - 0.030f);
-        glVertex3f(bubbles[i].x + 0.020f, 0.086f * pressScale, bubbleZ - 0.055f);
+        glVertex3f(bubbles[i].x - 0.045f, 0.122f * pressScale, bubbleZ - 0.040f);
+        glVertex3f(bubbles[i].x + 0.035f, 0.126f * pressScale, bubbleZ - 0.070f);
         glEnd();
     }
 
