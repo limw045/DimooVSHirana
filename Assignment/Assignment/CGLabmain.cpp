@@ -16,9 +16,9 @@
 #include <GL/glut.h>
 
 #include "CGLabmain.hpp"
-#include "Assignment.hpp"
+#include "CGLabSimpleFlower.hpp"
 
-using Assignment::MyVirtualWorld;
+using CGLabSimpleFlower::MyVirtualWorld;
 
 MyVirtualWorld myvirtualworld;
 
