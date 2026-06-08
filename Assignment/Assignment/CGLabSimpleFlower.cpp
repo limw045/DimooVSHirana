@@ -34,11 +34,11 @@ void SimpleFlower::drawCore(){
 }
 
 void SimpleFlower::drawPetals(){
-    // Draw 6 petals around the center
-    for (int i = 0; i < 6; ++i) {
+    // Draw 8 petals around the center
+    for (int i = 0; i < 8; ++i) {
         glPushMatrix();
-            // Spaced out by 60 degrees
-            glRotatef(i * 60.0f, 0.0f, 0.0f, 1.0f);
+            // Spaced out by 45 degrees
+            glRotatef(i * 45.0f, 0.0f, 0.0f, 1.0f);
             drawPetal();
         glPopMatrix();
     }
@@ -50,15 +50,20 @@ void SimpleFlower::drawPetal(){
     glBegin(GL_QUADS);
         glColor3f(1.0f, 0.0f, 0.0f); // Red Petal
         
-        // Exact Cartesian coordinates for a 60-degree sector wedge (wide at base, narrow at tip)
-        // Base: x = 2.0 * cos(30 deg) = 1.732, y = +- 2.0 * sin(30 deg) = +- 1.0 (touches adjacent petals)
-        // Tip:  x = 4.5, y = +- 0.40 (narrower flat tip)
+        // Exact 22.5 degrees half-angle (45 degrees full width) for both base and tip
+        // This makes neighboring petals touch along their entire radial edges (no gaps)
+        float angle = 22.5f * 3.14159265f / 180.0f;
+        float cosA = cos(angle);
+        float sinA = sin(angle);
+        
+        float rIn = 2.0f;     // Starts where the green disk ends
+        float rOut = 4.5f;    // Outer tip radius
         
         // Counter-clockwise vertex order
-        glVertex3f(1.732f, -1.00f, 0.0f); // Bottom-left (base)
-        glVertex3f(4.500f, -0.40f, 0.0f); // Bottom-right (tip)
-        glVertex3f(4.500f,  0.40f, 0.0f); // Top-right (tip)
-        glVertex3f(1.732f,  1.00f, 0.0f); // Top-left (base)
+        glVertex3f(rIn * cosA, -rIn * sinA, 0.0f);
+        glVertex3f(rOut * cosA, -rOut * sinA, 0.0f);
+        glVertex3f(rOut * cosA, rOut * sinA, 0.0f);
+        glVertex3f(rIn * cosA, rIn * sinA, 0.0f);
     glEnd();
     
     glEnable(GL_CULL_FACE);
