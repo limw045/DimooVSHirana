@@ -110,11 +110,11 @@ Arena::Arena() {
 
     initHolesAndBeams();
 
-    // Place 12 bubble cells along the floor for footing platform compatibility
-    float startX = -BOX_WIDTH / 2.0f + 1.0f;
-    for (int c = 0; c < 12; ++c) {
+    // Place bubble cells as a small bubble-wrap sheet on the left side of the box.
+    float startX = -BOX_WIDTH / 2.0f + 1.2f;
+    for (int c = 0; c < 24; ++c) {
         BubbleCell cell;
-        cell.x = startX + c * 0.35f;
+        cell.x = startX + (c % 8) * 0.28f;
         cell.y = 0.005f;
         cell.pressDepth = 0.0f;
         cell.pressVelocity = 0.0f;
@@ -1352,41 +1352,204 @@ void Arena::drawLid() {
     // Box lid completely removed according to user request.
 }
 
+static void drawFoldedInstructionLeaflet(float foldAngle) {
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_LINE_BIT);
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_CULL_FACE);
+
+    float open = clamp(foldAngle, 0.0f, 1.0f);
+    float wing = 0.20f + open * 0.13f;
+    float tilt = 0.04f + open * 0.08f;
+
+    // Three connected off-white panels.
+    glColor3f(0.88f, 0.86f, 0.78f);
+    glBegin(GL_QUADS);
+    glNormal3f(0.0f, 1.0f, 0.0f);
+    glVertex3f(-0.18f, 0.0f, -0.15f);
+    glVertex3f( 0.18f, 0.0f, -0.15f);
+    glVertex3f( 0.18f, 0.0f,  0.15f);
+    glVertex3f(-0.18f, 0.0f,  0.15f);
+
+    glVertex3f(-0.18f, 0.0f, -0.15f);
+    glVertex3f(-0.18f - wing, tilt, -0.13f);
+    glVertex3f(-0.18f - wing, tilt,  0.13f);
+    glVertex3f(-0.18f, 0.0f,  0.15f);
+
+    glVertex3f( 0.18f, 0.0f, -0.15f);
+    glVertex3f( 0.18f + wing, tilt, -0.13f);
+    glVertex3f( 0.18f + wing, tilt,  0.13f);
+    glVertex3f( 0.18f, 0.0f,  0.15f);
+    glEnd();
+
+    // Printed folds, tiny diagram blocks, and text lines.
+    glColor3f(0.18f, 0.18f, 0.16f);
+    glLineWidth(1.0f);
+    glBegin(GL_LINES);
+    glVertex3f(-0.18f, 0.004f, -0.15f); glVertex3f(-0.18f, 0.004f, 0.15f);
+    glVertex3f( 0.18f, 0.004f, -0.15f); glVertex3f( 0.18f, 0.004f, 0.15f);
+    for (int i = 0; i < 5; ++i) {
+        float z = -0.10f + i * 0.045f;
+        glVertex3f(-0.10f, 0.006f, z); glVertex3f(0.10f, 0.006f, z);
+        glVertex3f(-0.38f, 0.006f, z); glVertex3f(-0.24f, 0.006f, z);
+        glVertex3f( 0.24f, 0.006f, z); glVertex3f( 0.40f, 0.006f, z);
+    }
+    glEnd();
+
+    glColor3f(0.42f, 0.42f, 0.38f);
+    glBegin(GL_LINE_LOOP);
+    glVertex3f(-0.075f, 0.007f, 0.045f);
+    glVertex3f( 0.075f, 0.007f, 0.045f);
+    glVertex3f( 0.075f, 0.007f, 0.125f);
+    glVertex3f(-0.075f, 0.007f, 0.125f);
+    glEnd();
+
+    glPopAttrib();
+}
+
+static void drawDesiccantPacketModel(bool splitOpen) {
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_LINE_BIT);
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_CULL_FACE);
+
+    float tear = splitOpen ? 0.05f : 0.0f;
+
+    glColor3f(0.78f, 0.84f, 0.88f);
+    glBegin(GL_QUADS);
+    glNormal3f(0.0f, 1.0f, 0.0f);
+    glVertex3f(-0.21f - tear, 0.0f, -0.14f);
+    glVertex3f( 0.21f + tear, 0.0f, -0.12f);
+    glVertex3f( 0.18f + tear, 0.0f,  0.15f);
+    glVertex3f(-0.20f - tear, 0.0f,  0.13f);
+    glEnd();
+
+    // Crimped packet edges.
+    glColor3f(0.46f, 0.54f, 0.58f);
+    glLineWidth(1.0f);
+    glBegin(GL_LINE_LOOP);
+    glVertex3f(-0.21f - tear, 0.006f, -0.14f);
+    glVertex3f( 0.21f + tear, 0.006f, -0.12f);
+    glVertex3f( 0.18f + tear, 0.006f,  0.15f);
+    glVertex3f(-0.20f - tear, 0.006f,  0.13f);
+    glEnd();
+
+    // Blue label and small "text" stripes.
+    glColor3f(0.24f, 0.42f, 0.62f);
+    glBegin(GL_QUADS);
+    glVertex3f(-0.13f, 0.008f, -0.055f);
+    glVertex3f( 0.13f, 0.008f, -0.045f);
+    glVertex3f( 0.12f, 0.008f,  0.045f);
+    glVertex3f(-0.13f, 0.008f,  0.040f);
+    glEnd();
+
+    glColor3f(0.92f, 0.95f, 0.96f);
+    glBegin(GL_LINES);
+    for (int i = 0; i < 3; ++i) {
+        float z = -0.025f + i * 0.026f;
+        glVertex3f(-0.09f, 0.010f, z);
+        glVertex3f( 0.09f, 0.010f, z + 0.004f);
+    }
+    glEnd();
+
+    if (splitOpen) {
+        glColor3f(0.86f, 0.88f, 0.82f);
+        for (int i = 0; i < 7; ++i) {
+            glPushMatrix();
+            glTranslatef(0.03f + 0.035f * i, 0.012f, 0.18f + 0.015f * sin(i * 1.7f));
+            glutSolidSphere(0.014f, 6, 6);
+            glPopMatrix();
+        }
+    }
+
+    glPopAttrib();
+}
+
+static void drawReplacementPartsBagModel() {
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_LINE_BIT);
+    glDisable(GL_TEXTURE_2D);
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+    // Soft shadow under the clear bag.
+    glColor4f(0.02f, 0.02f, 0.018f, 0.16f);
+    glBegin(GL_QUADS);
+    glVertex3f(-0.28f, -0.002f, -0.18f);
+    glVertex3f( 0.28f, -0.002f, -0.18f);
+    glVertex3f( 0.28f, -0.002f,  0.18f);
+    glVertex3f(-0.28f, -0.002f,  0.18f);
+    glEnd();
+
+    // Clear plastic pouch.
+    glColor4f(0.78f, 0.92f, 1.0f, 0.22f);
+    glBegin(GL_QUADS);
+    glVertex3f(-0.25f, 0.0f, -0.16f);
+    glVertex3f( 0.25f, 0.0f, -0.14f);
+    glVertex3f( 0.22f, 0.0f,  0.16f);
+    glVertex3f(-0.23f, 0.0f,  0.15f);
+    glEnd();
+
+    glColor4f(1.0f, 1.0f, 1.0f, 0.42f);
+    glLineWidth(1.2f);
+    glBegin(GL_LINE_LOOP);
+    glVertex3f(-0.25f, 0.008f, -0.16f);
+    glVertex3f( 0.25f, 0.008f, -0.14f);
+    glVertex3f( 0.22f, 0.008f,  0.16f);
+    glVertex3f(-0.23f, 0.008f,  0.15f);
+    glEnd();
+
+    // Replacement parts inside.
+    glColor3f(0.95f, 0.32f, 0.32f);
+    glPushMatrix();
+    glTranslatef(-0.08f, 0.015f, 0.03f);
+    glutSolidSphere(0.045f, 10, 10);
+    glPopMatrix();
+
+    glColor3f(0.92f, 0.82f, 0.55f);
+    glPushMatrix();
+    glTranslatef(0.08f, 0.015f, -0.03f);
+    glutSolidCube(0.08f);
+    glPopMatrix();
+
+    glColor4f(1.0f, 1.0f, 1.0f, 0.34f);
+    glBegin(GL_QUADS);
+    glVertex3f(-0.20f, 0.012f, -0.10f);
+    glVertex3f(-0.05f, 0.012f, -0.12f);
+    glVertex3f( 0.20f, 0.012f,  0.12f);
+    glVertex3f( 0.05f, 0.012f,  0.14f);
+    glEnd();
+
+    glPopAttrib();
+}
+
 void Arena::drawOpaque() {
-    // 3D Box and interactive stubs
     drawBox();
     
-    // Draw stubs (pamphlet, desiccant) in opaque channel
-    glPushAttrib(GL_CURRENT_BIT | GL_LIGHTING_BIT);
-    glColor3f(0.9f, 0.9f, 0.9f);
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_LIGHTING_BIT);
+
+    // Product instructions leaflet: a tri-fold paper insert instead of a plain quad.
     if (pamphlet.isFlying || pamphlet.y <= 0.11f) {
         glPushMatrix();
-        glTranslatef(pamphlet.x, pamphlet.y, 0.0f);
-        glRotatef(pamphlet.rot, 0.0f, 0.0f, 1.0f);
-        glDisable(GL_CULL_FACE);
-        glBegin(GL_QUADS);
-        glNormal3f(0.0f, 0.0f, 1.0f);
-        glVertex3f(-0.2f, -0.12f, 0.0f);
-        glVertex3f( 0.2f, -0.12f, 0.0f);
-        glVertex3f( 0.2f,  0.12f, 0.0f);
-        glVertex3f(-0.2f,  0.12f, 0.0f);
-        glEnd();
-        glEnable(GL_CULL_FACE);
+        glTranslatef(pamphlet.x, 0.035f + pamphlet.y * 0.20f, -0.72f);
+        glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
+        glRotatef(pamphlet.rot * 0.35f + 8.0f, 0.0f, 0.0f, 1.0f);
+        drawFoldedInstructionLeaflet(pamphlet.foldAngle);
         glPopMatrix();
     }
     
-    // Desiccant stub packet
+    // Desiccant packet: printed sachet with crimped border and spill state.
     glPushMatrix();
-    glTranslatef(desiccant.x, desiccant.y, 0.0f);
-    glDisable(GL_CULL_FACE);
-    glBegin(GL_QUADS);
-    glNormal3f(0.0f, 0.0f, 1.0f);
-    glVertex3f(-0.15f, -0.1f, 0.0f);
-    glVertex3f( 0.15f, -0.1f, 0.0f);
-    glVertex3f( 0.15f,  0.1f, 0.0f);
-    glVertex3f(-0.15f,  0.1f, 0.0f);
-    glEnd();
-    glEnable(GL_CULL_FACE);
+    glTranslatef(desiccant.x, 0.045f, 0.86f);
+    glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
+    glRotatef(-10.0f + desiccant.vx * 2.0f, 0.0f, 0.0f, 1.0f);
+    drawDesiccantPacketModel(desiccant.popped);
+    glPopMatrix();
+
+    // Replacement parts bag: a small clear pouch on the right side of the floor.
+    glPushMatrix();
+    glTranslatef(4.15f, 0.040f, 0.60f);
+    glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
+    glRotatef(-12.0f, 0.0f, 0.0f, 1.0f);
+    drawReplacementPartsBagModel();
     glPopMatrix();
 
     glPopAttrib();
@@ -1398,25 +1561,36 @@ void Arena::drawTransparent() {
     glEnable(GL_BLEND);
     glDepthMask(GL_FALSE);
 
-    // Green bubble wrap pad
-    glColor4f(0.75f, 0.92f, 0.78f, 0.45f);
+    // Bubble wrap sheet: translucent pad with individual compressible bubbles.
+    glColor4f(0.50f, 0.72f, 0.58f, 0.32f);
     glBegin(GL_QUADS);
     glNormal3f(0.0f, 1.0f, 0.0f);
-    glVertex3f(-2.0f, 0.006f,  0.15f);
-    glVertex3f( 2.0f, 0.006f,  0.15f);
-    glVertex3f( 2.0f, 0.006f, -0.15f);
-    glVertex3f(-2.0f, 0.006f, -0.15f);
+    glVertex3f(-7.95f, 0.006f,  0.62f);
+    glVertex3f(-5.25f, 0.006f,  0.62f);
+    glVertex3f(-5.25f, 0.006f, -0.55f);
+    glVertex3f(-7.95f, 0.006f, -0.55f);
     glEnd();
 
-    // 2D Stomping bubble bubbles
-    glColor4f(0.85f, 0.97f, 0.92f, 0.65f);
     for (size_t i = 0; i < bubbles.size(); ++i) {
         if (bubbles[i].popped) continue;
+        int col = (int)(i % 8);
+        int row = (int)(i / 8);
+        float bubbleZ = -0.40f + row * 0.42f;
+        float pressScale = 1.0f - bubbles[i].pressDepth * 0.72f;
+
+        glColor4f(0.75f, 0.96f, 0.84f, 0.58f);
         glPushMatrix();
-        glTranslatef(bubbles[i].x, bubbles[i].y, 0.0f);
-        glScalef(1.0f, 0.8f * (1.0f - bubbles[i].pressDepth * 0.85f), 1.0f);
-        glutSolidSphere(0.06, 8, 8);
+        glTranslatef(bubbles[i].x, 0.045f, bubbleZ);
+        glScalef(1.0f, 0.34f * pressScale, 1.0f);
+        glutSolidSphere(0.105f, 14, 8);
         glPopMatrix();
+
+        // Tiny white crescent highlight on each plastic dome.
+        glColor4f(1.0f, 1.0f, 1.0f, 0.30f);
+        glBegin(GL_LINES);
+        glVertex3f(bubbles[i].x - 0.035f, 0.083f * pressScale, bubbleZ - 0.030f);
+        glVertex3f(bubbles[i].x + 0.020f, 0.086f * pressScale, bubbleZ - 0.055f);
+        glEnd();
     }
 
     drawLightBeams();

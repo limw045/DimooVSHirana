@@ -556,7 +556,7 @@ void Game::draw() {
         glDepthMask(GL_FALSE);
         
         // P1 阴影
-        glColor4f(0.0f, 0.0f, 0.0f, 0.25f);
+        glColor4f(0.0f, 0.0f, 0.0f, 0.13f);
         glPushMatrix();
         glTranslatef(hironoX, 0.001f, 0.0f);
         glScalef(1.0f, 0.3f, 1.0f);
@@ -571,8 +571,8 @@ void Game::draw() {
         // P2 阴影 (随高度变化缩放和渐变)
         float floatY = sin(t * 3.0f) * 0.05f;
         float currentDimooY = dimooY + floatY;
-        float shadowAlpha = 0.25f * (1.0f - currentDimooY * 0.5f);
-        if (shadowAlpha < 0.05f) shadowAlpha = 0.05f;
+        float shadowAlpha = 0.13f * (1.0f - currentDimooY * 0.5f);
+        if (shadowAlpha < 0.035f) shadowAlpha = 0.035f;
         float shadowSize = 0.35f * (1.0f - currentDimooY * 0.3f);
         if (shadowSize < 0.15f) shadowSize = 0.15f;
         
@@ -947,6 +947,7 @@ void Game::handleInput(unsigned char key) {
         case 'h': case 'H':
             // 给干燥剂包一个随机冲量 (仅横向 vx 运动)
             arena.desiccant.vx = ((rand() % 200) / 100.0f - 1.0f) * 5.0f;
+            arena.desiccant.popped = true;
             std::cout << "[Debug] Kicked desiccant bag!" << std::endl;
             break;
 
