@@ -110,11 +110,11 @@ Arena::Arena() {
 
     initHolesAndBeams();
 
-    // Place bubble cells as a small bubble-wrap sheet on the left side of the box.
-    float startX = -4.55f;
-    for (int c = 0; c < 24; ++c) {
+    // Place bubble cells as a playable packing liner across the main fight lane.
+    float startX = -3.15f;
+    for (int c = 0; c < 28; ++c) {
         BubbleCell cell;
-        cell.x = startX + (c % 8) * 0.28f;
+        cell.x = startX + (c % 14) * 0.48f;
         cell.y = 0.005f;
         cell.pressDepth = 0.0f;
         cell.pressVelocity = 0.0f;
@@ -1526,35 +1526,6 @@ void Arena::drawOpaque() {
     
     glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_LIGHTING_BIT);
 
-    // Product instructions leaflet: a tri-fold paper insert placed where it is visible in the default view.
-    if (pamphlet.isFlying || pamphlet.y <= 0.11f) {
-        glPushMatrix();
-        glTranslatef(-3.65f + pamphlet.x * 0.12f, 0.080f + pamphlet.y * 0.20f, 1.75f);
-        glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
-        glRotatef(pamphlet.rot * 0.35f - 8.0f, 0.0f, 0.0f, 1.0f);
-        glScalef(1.35f, 1.35f, 1.35f);
-        drawFoldedInstructionLeaflet(pamphlet.foldAngle);
-        glPopMatrix();
-    }
-    
-    // Desiccant packet: printed sachet with crimped border and spill state.
-    glPushMatrix();
-    glTranslatef(3.15f + desiccant.x * 0.12f, 0.080f, 1.55f);
-    glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
-    glRotatef(-10.0f + desiccant.vx * 2.0f, 0.0f, 0.0f, 1.0f);
-    glScalef(1.45f, 1.45f, 1.45f);
-    drawDesiccantPacketModel(desiccant.popped);
-    glPopMatrix();
-
-    // Replacement parts bag: a small clear pouch on the right side of the floor.
-    glPushMatrix();
-    glTranslatef(4.35f, 0.080f, 1.45f);
-    glRotatef(90.0f, 1.0f, 0.0f, 0.0f);
-    glRotatef(-12.0f, 0.0f, 0.0f, 1.0f);
-    glScalef(1.35f, 1.35f, 1.35f);
-    drawReplacementPartsBagModel();
-    glPopMatrix();
-
     glPopAttrib();
 }
 
@@ -1564,35 +1535,42 @@ void Arena::drawTransparent() {
     glEnable(GL_BLEND);
     glDepthMask(GL_FALSE);
 
-    // Bubble wrap sheet: translucent pad with individual compressible bubbles.
-    glColor4f(0.50f, 0.72f, 0.58f, 0.32f);
+    // Bubble wrap liner: a low, playable packing layer under the fight lane.
+    glColor4f(0.72f, 0.88f, 0.78f, 0.16f);
     glBegin(GL_QUADS);
     glNormal3f(0.0f, 1.0f, 0.0f);
-    glVertex3f(-4.85f, 0.012f,  2.15f);
-    glVertex3f(-1.75f, 0.012f,  2.15f);
-    glVertex3f(-1.75f, 0.012f,  0.70f);
-    glVertex3f(-4.85f, 0.012f,  0.70f);
+    glVertex3f(-3.55f, 0.012f,  0.46f);
+    glVertex3f( 3.55f, 0.012f,  0.46f);
+    glVertex3f( 3.55f, 0.012f, -0.46f);
+    glVertex3f(-3.55f, 0.012f, -0.46f);
+    glEnd();
+
+    glColor4f(1.0f, 1.0f, 1.0f, 0.12f);
+    glBegin(GL_LINE_LOOP);
+    glVertex3f(-3.55f, 0.018f,  0.46f);
+    glVertex3f( 3.55f, 0.018f,  0.46f);
+    glVertex3f( 3.55f, 0.018f, -0.46f);
+    glVertex3f(-3.55f, 0.018f, -0.46f);
     glEnd();
 
     for (size_t i = 0; i < bubbles.size(); ++i) {
         if (bubbles[i].popped) continue;
-        int col = (int)(i % 8);
-        int row = (int)(i / 8);
-        float bubbleZ = 0.92f + row * 0.50f;
+        int row = (int)(i / 14);
+        float bubbleZ = (row == 0) ? -0.22f : 0.22f;
         float pressScale = 1.0f - bubbles[i].pressDepth * 0.72f;
 
-        glColor4f(0.75f, 0.96f, 0.84f, 0.58f);
+        glColor4f(0.78f, 0.95f, 0.84f, 0.36f);
         glPushMatrix();
-        glTranslatef(bubbles[i].x, 0.080f, bubbleZ);
+        glTranslatef(bubbles[i].x, 0.060f, bubbleZ);
         glScalef(1.0f, 0.34f * pressScale, 1.0f);
-        glutSolidSphere(0.135f, 16, 10);
+        glutSolidSphere(0.125f, 16, 10);
         glPopMatrix();
 
         // Tiny white crescent highlight on each plastic dome.
-        glColor4f(1.0f, 1.0f, 1.0f, 0.30f);
+        glColor4f(1.0f, 1.0f, 1.0f, 0.18f);
         glBegin(GL_LINES);
-        glVertex3f(bubbles[i].x - 0.045f, 0.122f * pressScale, bubbleZ - 0.040f);
-        glVertex3f(bubbles[i].x + 0.035f, 0.126f * pressScale, bubbleZ - 0.070f);
+        glVertex3f(bubbles[i].x - 0.040f, 0.100f * pressScale, bubbleZ - 0.038f);
+        glVertex3f(bubbles[i].x + 0.032f, 0.104f * pressScale, bubbleZ - 0.064f);
         glEnd();
     }
 

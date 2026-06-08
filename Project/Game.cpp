@@ -792,8 +792,7 @@ void Game::drawHUD() {
             drawString(GLUT_BITMAP_HELVETICA_12, "Free Cam Controls: WASD/Arrows (Orbit), Q/E (Zoom In/Out), F/V (Up/Down), R (Reset)", 15, 35);
             drawString(GLUT_BITMAP_HELVETICA_12, "Inspect the box from any angle using your keyboard controls!", 15, 55);
         } else {
-            drawString(GLUT_BITMAP_HELVETICA_12, "Press [H] to kick desiccant bag | Press [P] to throw pamphlet", 15, 35);
-            drawString(GLUT_BITMAP_HELVETICA_12, "Controls: P1: A/D/W/J/K/L (Combat) | P2: Left/Right/Up/1/2/3 (Combat)", 15, 55);
+            drawString(GLUT_BITMAP_HELVETICA_12, "Controls: P1: A/D/W/J/K/L (Combat) | P2: Left/Right/Up/1/2/3 (Combat)", 15, 35);
         }
 
         if (showColliders) {
