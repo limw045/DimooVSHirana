@@ -121,6 +121,7 @@ void Game::spawnDust(float x, float y, float z, int count) {
 }
 
 void Game::update(float dt) {
+    arena.setHpPercentages(hironoHp, hironoMaxHp, dimooHp, dimooMaxHp);
     stateTimer += dt;
 
     // 更新粒子系统
@@ -272,7 +273,8 @@ void Game::updateBattle(float dt) {
     camera.update(dt, hironoX, hironoY, dimooX, dimooY, false);
     
     // 角色自发光点光源跟着走 (保持 Z = 0.0f)
-    lighting.updateCharacterLights(hironoX, hironoY, 0.0f, dimooX, dimooY, 0.0f, false);
+    bool isHpLow = (hironoHp / hironoMaxHp < 0.4f || dimooHp / dimooMaxHp < 0.4f);
+    lighting.updateCharacterLights(hironoX, hironoY, 0.0f, dimooX, dimooY, 0.0f, isHpLow);
 }
 
 // 绘制小野 (Hirono) 2D 纸片层级板羽人设
@@ -689,7 +691,7 @@ void Game::drawHUD() {
         
         glColor3f(0.6f, 0.6f, 0.6f);
         drawString(GLUT_BITMAP_HELVETICA_12, "Player 1 (Hirono): A/D (Walk), W (Jump), J/K/L (Attack/Skill/Ult) | Player 2 (Dimoo): Left/Right/Up, 1/2/3 (Attack/Skill/Ult)", 200, 240);
-        drawString(GLUT_BITMAP_HELVETICA_12, "Debug Keys: F4 (Colliders) | F5 (Skip Intro) | F6 (Crash Wall) | F7 (Damage P2) | F8 (AI)", 400, 210);
+        drawString(GLUT_BITMAP_HELVETICA_12, "Debug Keys: F4 (Colliders) | F5 (Skip Intro) | F6 (Crash Wall) | F7 (Damage P2) | F8 (AI) | F9 (Free Cam)", 380, 210);
     } else {
         // 绘制血条背景边框 (KOF 街机风格)
         glColor3f(0.12f, 0.12f, 0.12f);
@@ -772,17 +774,27 @@ void Game::drawHUD() {
         drawString(GLUT_BITMAP_HELVETICA_12, "P1: HIRONO", 55, 680);
         drawString(GLUT_BITMAP_HELVETICA_12, "P2: DIMOO", 1150, 680);
 
-        // 调试常驻信息
-        glColor3f(0.2f, 0.9f, 0.2f);
-        drawString(GLUT_BITMAP_HELVETICA_12, "STATUS: BATTLE ONGOING", 15, 700);
+        // 调试常驻信息与浮空相机提示
+        if (camera.freeCam) {
+            glColor3f(0.9f, 0.9f, 0.1f);
+            drawString(GLUT_BITMAP_HELVETICA_12, "STATUS: FREE CAMERA ACTIVE (F9 to Exit)", 15, 700);
+        } else {
+            glColor3f(0.2f, 0.9f, 0.2f);
+            drawString(GLUT_BITMAP_HELVETICA_12, "STATUS: BATTLE ONGOING (F9 for Free Cam)", 15, 700);
+        }
 
         std::stringstream ss;
         ss << "Hirono Pos: (" << hironoX << ", " << hironoY << ") | Dimoo Pos: (" << dimooX << ", " << dimooY << ")";
         glColor3f(0.9f, 0.9f, 0.9f);
         drawString(GLUT_BITMAP_HELVETICA_12, ss.str(), 15, 15);
 
-        drawString(GLUT_BITMAP_HELVETICA_12, "Press [H] to kick desiccant bag | Press [P] to throw pamphlet", 15, 35);
-        drawString(GLUT_BITMAP_HELVETICA_12, "Controls: P1: A/D/W/J/K/L (Combat) | P2: Left/Right/Up/1/2/3 (Combat)", 15, 55);
+        if (camera.freeCam) {
+            drawString(GLUT_BITMAP_HELVETICA_12, "Free Cam Controls: WASD/Arrows (Orbit), Q/E (Zoom In/Out), F/V (Up/Down), R (Reset)", 15, 35);
+            drawString(GLUT_BITMAP_HELVETICA_12, "Inspect the box from any angle using your keyboard controls!", 15, 55);
+        } else {
+            drawString(GLUT_BITMAP_HELVETICA_12, "Press [H] to kick desiccant bag | Press [P] to throw pamphlet", 15, 35);
+            drawString(GLUT_BITMAP_HELVETICA_12, "Controls: P1: A/D/W/J/K/L (Combat) | P2: Left/Right/Up/1/2/3 (Combat)", 15, 55);
+        }
 
         if (showColliders) {
             glColor3f(1.0f, 0.3f, 0.3f);
@@ -824,6 +836,24 @@ void Game::drawHUD() {
 }
 
 void Game::handleInput(unsigned char key) {
+    // Intercept keyboard inputs if free camera mode is enabled
+    if (camera.freeCam) {
+        float rotStep = 3.0f;
+        float zoomStep = 0.15f;
+        switch (key) {
+            case 'a': case 'A': camera.yaw -= rotStep; return;
+            case 'd': case 'D': camera.yaw += rotStep; return;
+            case 'w': case 'W': camera.pitch += rotStep; return;
+            case 's': case 'S': camera.pitch -= rotStep; return;
+            case 'q': case 'Q': camera.radius -= zoomStep; return;
+            case 'e': case 'E': camera.radius += zoomStep; return;
+            case 'f': case 'F': camera.centerY += 0.1f; return;
+            case 'v': case 'V': camera.centerY -= 0.1f; return;
+            case 'r': case 'R': camera.init(); return;
+            case 27: exit(0); return;
+        }
+    }
+
     float step = 0.15f;
     switch (key) {
         // Player 1 (小野) 移动与跳跃
@@ -955,6 +985,23 @@ void Game::handleInput(unsigned char key) {
 }
 
 void Game::handleSpecialInput(int key) {
+    // Intercept special keyboard inputs if free camera mode is enabled
+    if (key == GLUT_KEY_F9) {
+        camera.freeCam = !camera.freeCam;
+        std::cout << "[Camera] Toggle Free Camera: " << (camera.freeCam ? "ON" : "OFF") << std::endl;
+        return;
+    }
+
+    if (camera.freeCam) {
+        float rotStep = 3.0f;
+        switch (key) {
+            case GLUT_KEY_LEFT:  camera.yaw -= rotStep; return;
+            case GLUT_KEY_RIGHT: camera.yaw += rotStep; return;
+            case GLUT_KEY_UP:    camera.pitch += rotStep; return;
+            case GLUT_KEY_DOWN:  camera.pitch -= rotStep; return;
+        }
+    }
+
     float step = 0.15f;
     switch (key) {
         // Player 2 (Dimoo) 移动与跳跃

@@ -1,5 +1,6 @@
 #include "Camera.h"
 #include <cstdlib>
+#include <iostream>
 
 Camera::Camera() {
     x = targetX = 0.0f;
@@ -14,6 +15,15 @@ Camera::Camera() {
     shakeTime = 0.0f;
     shakeIntensity = 0.0f;
     lerpSpeed = 3.5f;
+
+    // Free camera defaults
+    freeCam = false;
+    yaw = 0.0f;
+    pitch = 15.0f;
+    radius = 5.5f;
+    centerX = 0.0f;
+    centerY = 2.5f; // Middle of box height
+    centerZ = 0.0f;
 }
 
 Camera::~Camera() {}
@@ -27,42 +37,76 @@ void Camera::init() {
     lookAtZ = 0.0f;
     shakeX = shakeY = shakeZ = 0.0f;
     shakeTime = 0.0f;
+
+    freeCam = false;
+    yaw = 0.0f;
+    pitch = 15.0f;
+    radius = 5.5f;
+    centerX = 0.0f;
+    centerY = 2.5f;
+    centerZ = 0.0f;
 }
 
 void Camera::update(float dt, float char1X, float char1Y, float char2X, float char2Y, bool isUltActive) {
-    // 1. 计算两个角色的中心点和距离
-    float midX = (char1X + char2X) / 2.0f;
-    float midY = (char1Y + char2Y) / 2.0f;
+    if (dt < 0.0f) {
+        return;
+    }
     
-    float dx = char1X - char2X;
-    float dy = char1Y - char2Y;
-    float dist = sqrt(dx*dx + dy*dy);
+    // Clamp delta time to avoid coordinate jumping on lag spikes
+    dt = clamp(dt, 0.0f, 0.05f);
 
-    // 2. 经典横版格斗游戏视角（平视微俯视，低机位，焦距随距离平滑缩放）
-    if (isUltActive) {
-        // 大招特写镜头
-        targetX = midX;
-        targetY = midY + 0.5f;
-        targetZ = 1.8f;
-        targetLookAtX = midX;
-        targetLookAtY = midY + 0.4f;
-        targetLookAtZ = 0.0f;
+    if (freeCam) {
+        // Clamp camera orbit bounds to prevent gimbal inversion
+        pitch = clamp(pitch, -85.0f, 85.0f);
+        radius = clamp(radius, 1.5f, 15.0f);
+
+        // Convert spherical orbit coordinates to Cartesian coordinates
+        float pitchRad = pitch * M_PI / 180.0f;
+        float yawRad = yaw * M_PI / 180.0f;
+
+        targetX = centerX + radius * cos(pitchRad) * sin(yawRad);
+        targetY = centerY + radius * sin(pitchRad);
+        targetZ = centerZ + radius * cos(pitchRad) * cos(yawRad);
+
+        targetLookAtX = centerX;
+        targetLookAtY = centerY;
+        targetLookAtZ = centerZ;
     } else {
-        // 正常格斗侧视：摄像机水平居中跟踪，低高度
-        targetX = midX; 
-        targetY = midY + 0.6f;          // 稍微偏高一点以看到纸箱内部底部
-        targetZ = 2.8f + dist * 0.45f;  // 动态焦距（保证两个角色始终同屏且清晰可见）
+        // standard automatic 2.5D tracking mode
+        float midX = (char1X + char2X) / 2.0f;
+        float midY = (char1Y + char2Y) / 2.0f;
         
-        targetLookAtX = midX;
-        targetLookAtY = midY + 0.5f;    // 锁定视线在角色中部高度
-        targetLookAtZ = 0.0f;           // 锁定在 Z = 0 的格斗平面
+        float dx = char1X - char2X;
+        float dy = char1Y - char2Y;
+        float dist = sqrt(dx*dx + dy*dy);
+
+        if (isUltActive) {
+            targetX = midX;
+            targetY = midY + 0.5f;
+            targetZ = 1.8f;
+            targetLookAtX = midX;
+            targetLookAtY = midY + 0.4f;
+            targetLookAtZ = 0.0f;
+        } else {
+            targetX = midX; 
+            // Rise camera height dynamically as characters move apart
+            targetY = 1.2f + dist * 0.22f;
+            // Pull back camera distance dynamically to keep characters in frame with a safety margin
+            targetZ = 3.0f + dist * 0.72f;
+            
+            targetLookAtX = midX;
+            // Keep the look-at target relatively low to force a downward pitch angle
+            targetLookAtY = 1.0f + dist * 0.05f;
+            targetLookAtZ = 0.0f;
+        }
+
+        // Limit the automatic camera tracking boundary so it doesn't clip out of the box
+        // Adjusted for the wide arena and extended depth range to prevent character out-of-frame and floor clipping
+        targetX = clamp(targetX, -BOX_WIDTH / 2.0f + 2.5f, BOX_WIDTH / 2.0f - 2.5f);
+        targetZ = clamp(targetZ, 3.5f, 16.0f);
     }
 
-    // 限制相机边界，防止飞出纸盒外面
-    targetX = clamp(targetX, -BOX_WIDTH / 2.0f + 1.0f, BOX_WIDTH / 2.0f - 1.0f);
-    targetZ = clamp(targetZ, 2.0f, 6.0f);
-
-    // 3. 平滑插值 (Lerp)
+    // Smooth camera transition interpolate (Lerp)
     x += (targetX - x) * lerpSpeed * dt;
     y += (targetY - y) * lerpSpeed * dt;
     z += (targetZ - z) * lerpSpeed * dt;
@@ -71,7 +115,7 @@ void Camera::update(float dt, float char1X, float char1Y, float char2X, float ch
     lookAtY += (targetLookAtY - lookAtY) * lerpSpeed * dt;
     lookAtZ += (targetLookAtZ - lookAtZ) * lerpSpeed * dt;
 
-    // 4. 处理镜头震动衰减
+    // Camera screen shake decay
     if (shakeTime > 0.0f) {
         shakeTime -= dt;
         float factor = shakeTime / 0.15f;
@@ -93,6 +137,6 @@ void Camera::applyMatrix() {
 }
 
 void Camera::applyShake(float intensity) {
-    shakeTime = 0.15f;        // 震动持续 0.15 秒
+    shakeTime = 0.15f;
     shakeIntensity = intensity;
 }

@@ -71,18 +71,11 @@ void Lighting::updateCharacterLights(float hX, float hY, float hZ,
     GLfloat dPos[] = { dX, dY + 0.3f, dZ, 1.0f };
     glLightfv(GL_LIGHT2, GL_POSITION, dPos);
 
-    // 动态氛围灯效：当任意一方血量低于40% (hpLow) 时，降低主环境光源亮度，突出点光源
-    if (hpLow) {
-        GLfloat dimAmbient[] = { 0.08f, 0.08f, 0.1f, 1.0f };
-        GLfloat dimDiffuse[] = { 0.40f, 0.38f, 0.38f, 1.0f };
-        glLightfv(GL_LIGHT0, GL_AMBIENT, dimAmbient);
-        glLightfv(GL_LIGHT0, GL_DIFFUSE, dimDiffuse);
-    } else {
-        GLfloat normalAmbient[]  = { 0.25f, 0.24f, 0.22f, 1.0f };
-        GLfloat normalDiffuse[]  = { 0.85f, 0.83f, 0.78f, 1.0f };
-        glLightfv(GL_LIGHT0, GL_AMBIENT, normalAmbient);
-        glLightfv(GL_LIGHT0, GL_DIFFUSE, normalDiffuse);
-    }
+    // Keep main ambient lighting constant and bright to allow rays to stand out and preserve outside visual details
+    GLfloat normalAmbient[]  = { 0.25f, 0.24f, 0.22f, 1.0f };
+    GLfloat normalDiffuse[]  = { 0.85f, 0.83f, 0.78f, 1.0f };
+    glLightfv(GL_LIGHT0, GL_AMBIENT, normalAmbient);
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, normalDiffuse);
 }
 
 void Lighting::toggleLighting(bool enable) {

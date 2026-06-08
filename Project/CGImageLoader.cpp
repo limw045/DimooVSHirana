@@ -154,7 +154,6 @@ void ReadBMP(char *FileName, MyImageStruct *Image)
  int			Debug = FALSE;
  BMPColorEntry	ColorTable[256];
  int            ColorTableSize;
- unsigned char	PixelRow[1024*3];
  int			BytesPerRow;
  int			TotalBytesPerRow;
  int			BytesPerPixel;
@@ -242,29 +241,35 @@ void ReadBMP(char *FileName, MyImageStruct *Image)
   				      TotalBytesPerRow += (4 - TotalBytesPerRow % 4); /* round to 32 bit alignment */
   				   if (Debug) printf("BytesPerRow = %d\n", TotalBytesPerRow);
 
-  				   p = Image->Pixels;
-  				   for (y = 0; y < Info.Height; y++)
-  				   {
-  			  	      status = fread( &PixelRow, TotalBytesPerRow, 1, fp);
-  					  if (status <= 0) { printf("Error reading BMP pixels\n"); break; }
+  				   unsigned char* PixelRow = (unsigned char*) malloc(TotalBytesPerRow);
+  				   if (PixelRow == NULL) {
+  				      printf("Error allocating row buffer memory\n");
+  				   } else {
+  				      p = Image->Pixels;
+  				      for (y = 0; y < Info.Height; y++)
+  				      {
+  			  	         status = fread( PixelRow, TotalBytesPerRow, 1, fp);
+  					     if (status <= 0) { printf("Error reading BMP pixels\n"); break; }
 
-  					  for (x = 0; x < BytesPerRow; )
-  					  {
-  				  	     if (BytesPerPixel == 1)
-  				  	     {
-  				  	        Index = PixelRow[x++];
-  				  	        *p++ = ColorTable[Index].Red;
-  				  	        *p++ = ColorTable[Index].Green;
-  				  	        *p++ = ColorTable[Index].Blue;
-  				  	     }
-  				  	     else // BytesPerPixel == 3
-  				  	     {
-  				  	        *p++ = PixelRow[x+2]; /* green */
-  				  	        *p++ = PixelRow[x+1];	/* blue  */
-  				  	        *p++ = PixelRow[x];		/* red	 */
-  				  	        x += 3;
-  				  	     }
-  					  }
+  					     for (x = 0; x < BytesPerRow; )
+  					     {
+  				  	        if (BytesPerPixel == 1)
+  				  	        {
+  				  	           Index = PixelRow[x++];
+  				  	           *p++ = ColorTable[Index].Red;
+  				  	           *p++ = ColorTable[Index].Green;
+  				  	           *p++ = ColorTable[Index].Blue;
+  				  	        }
+  				  	        else // BytesPerPixel == 3
+  				  	        {
+  				  	           *p++ = PixelRow[x+2]; /* green */
+  				  	           *p++ = PixelRow[x+1];	/* blue  */
+  				  	           *p++ = PixelRow[x];		/* red	 */
+  				  	           x += 3;
+  				  	        }
+  					     }
+  				      }
+  				      free(PixelRow);
   				   }
                 }
              }

@@ -13,7 +13,7 @@
 #endif
 
 // 竞技场尺寸常量
-const float BOX_WIDTH = 6.0f;
+const float BOX_WIDTH = 17.941f;
 const float BOX_HEIGHT = 5.0f;
 const float BOX_DEPTH = 6.0f; // 3D 盒子的前后深度
 
