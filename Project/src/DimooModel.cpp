@@ -501,7 +501,7 @@ static void drawHairCluster(const Vec3& pos, const Vec3& scale,
 
     // Enable GL_COLOR_MATERIAL to combine vertex color gradients with lighting
     glEnable(GL_COLOR_MATERIAL);
-    glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
+    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 
     // 定义粉紫基准色
     GLfloat pinkCol[] = {0.98f, 0.82f, 0.85f};  // 珍珠粉
@@ -553,6 +553,7 @@ static void drawHairCluster(const Vec3& pos, const Vec3& scale,
 }
 
 static void drawHairClusters(const DimooVisualState& state, float t, float moveLean) {
+    glDisable(GL_TEXTURE_2D); // Ensure texturing is disabled for hair clusters
     float sway = sin(t * 2.2f) * (1.0f + state.moveBlend * 0.8f);
     const int hairCount = (int)(sizeof(gHairClusters) / sizeof(gHairClusters[0]));
     for (int i = 0; i < hairCount; ++i) {
