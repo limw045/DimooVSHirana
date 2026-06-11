@@ -12,3 +12,7 @@ obj/
 # Temporary files
 *~
 *.tmp
+
+# Visual Companion Brainstorming files
+.superpowers/
+
