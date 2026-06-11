@@ -160,7 +160,8 @@ static void drawEllipsoid3D(float rx, float ry, float rz, int lats, int longs) {
 }
 
 static void drawPetal3D(float rx, float ry, float rz, int lats, int longs,
-                        const GLfloat baseColor[3], const GLfloat tipColor[3]) {
+                        const GLfloat baseColor[3], const GLfloat tipColor[3],
+                        float bendX, float bendZ) {
     for (int i = 0; i < lats; ++i) {
         float lat0 = (float)M_PI * (-0.5f + (float)i / (float)lats);
         float lat1 = (float)M_PI * (-0.5f + (float)(i + 1) / (float)lats);
@@ -182,8 +183,8 @@ static void drawPetal3D(float rx, float ry, float rz, int lats, int longs,
             float y1_u = y * zr1;
 
             // Taper along the local Y-axis (tip at positive Y, base at negative Y)
-            float taper0 = 1.0f - y0_u * 0.35f;
-            float taper1 = 1.0f - y1_u * 0.35f;
+            float taper0 = 1.0f - y0_u * y0_u;
+            float taper1 = 1.0f - y1_u * y1_u;
 
             // Gradient interpolation along the local Y-axis
             float factor0 = (y0_u + 1.0f) * 0.5f;
@@ -194,20 +195,34 @@ static void drawPetal3D(float rx, float ry, float rz, int lats, int longs,
             factor1 = factor1 * factor1 * (3.0f - 2.0f * factor1);
 
             // Vertex 0 normal, color, and position
-            glNormal3f(x0_u, y0_u, z0);
+            float nx0 = x0_u;
+            float ny0 = y0_u + 2.0f * bendX * y0_u * x0_u + 2.0f * bendZ * y0_u * z0;
+            float nz0 = z0;
+            Vec3 n0 = normalize(Vec3(nx0, ny0, nz0));
+            glNormal3f(n0.x, n0.y, n0.z);
             glColor4f((baseColor[0] * (1.0f - factor0) + tipColor[0] * factor0) * 0.78f,
                       (baseColor[1] * (1.0f - factor0) + tipColor[1] * factor0) * 0.78f,
                       (baseColor[2] * (1.0f - factor0) + tipColor[2] * factor0) * 0.78f,
                       1.0f);
-            glVertex3f(x0_u * rx * taper0, y0_u * ry, z0 * rz);
+            float bendFactor0 = 1.0f - y0_u * y0_u;
+            float bx0 = bendX * bendFactor0;
+            float bz0 = bendZ * bendFactor0;
+            glVertex3f(x0_u * rx * taper0 + bx0, y0_u * ry, z0 * rz * taper0 + bz0);
 
             // Vertex 1 normal, color, and position
-            glNormal3f(x1_u, y1_u, z1);
+            float nx1 = x1_u;
+            float ny1 = y1_u + 2.0f * bendX * y1_u * x1_u + 2.0f * bendZ * y1_u * z1;
+            float nz1 = z1;
+            Vec3 n1 = normalize(Vec3(nx1, ny1, nz1));
+            glNormal3f(n1.x, n1.y, n1.z);
             glColor4f((baseColor[0] * (1.0f - factor1) + tipColor[0] * factor1) * 0.78f,
                       (baseColor[1] * (1.0f - factor1) + tipColor[1] * factor1) * 0.78f,
                       (baseColor[2] * (1.0f - factor1) + tipColor[2] * factor1) * 0.78f,
                       1.0f);
-            glVertex3f(x1_u * rx * taper1, y1_u * ry, z1 * rz);
+            float bendFactor1 = 1.0f - y1_u * y1_u;
+            float bx1 = bendX * bendFactor1;
+            float bz1 = bendZ * bendFactor1;
+            glVertex3f(x1_u * rx * taper1 + bx1, y1_u * ry, z1 * rz * taper1 + bz1);
         }
         glEnd();
     }
@@ -470,7 +485,7 @@ static void drawFaceFeatures(const DimooVisualState& state) {
 
 static void drawHairCluster(const Vec3& pos, const Vec3& scale,
                             const Vec3& rot, int colorIndex,
-                            bool highlightTop) {
+                            bool highlightTop, float bendX, float bendZ) {
     glPushMatrix();
     glTranslatef(pos.x, pos.y, pos.z);
     glRotatef(rot.x, 1.0f, 0.0f, 0.0f);
@@ -508,7 +523,7 @@ static void drawHairCluster(const Vec3& pos, const Vec3& scale,
         richBaseCol[2] = clamp(baseCol[2] - minVal * 0.28f, 0.0f, 1.0f);
     }
 
-    drawPetal3D(scale.x, scale.y, scale.z, 12, 16, richBaseCol, tipCol);
+    drawPetal3D(scale.x, scale.y, scale.z, 12, 16, richBaseCol, tipCol, bendX, bendZ);
 
     glDisable(GL_COLOR_MATERIAL);
 
@@ -555,7 +570,15 @@ static void drawHairClusters(const DimooVisualState& state, float t, float moveL
             r.z -= gHairSideSpread * 0.35f;
         }
 
-        drawHairCluster(p, s, r, i % 5, gHairClusters[i].highlightTop);
+        float bendX = clamp(p.x * 0.18f, -0.05f, 0.05f);
+        float bendZ = clamp(-p.z * 0.18f, -0.04f, 0.04f);
+
+        // 如果是前额刘海 (i < 5)，加大向下/向后的弯曲，以贴合额头
+        if (i < 5) {
+            bendZ -= 0.02f;
+        }
+
+        drawHairCluster(p, s, r, i % 5, gHairClusters[i].highlightTop, bendX, bendZ);
     }
 }
 
