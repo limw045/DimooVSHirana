@@ -476,7 +476,7 @@ static void drawInspectorUi() {
                 ImGui::DragFloat3("Pos", hair.pos, 0.0025f, -0.60f, 0.60f);
                 ImGui::DragFloat3("Scale", hair.scale, 0.0020f, 0.005f, 0.35f);
                 ImGui::DragFloat3("Rot", hair.rot, 0.5f, -180.0f, 180.0f);
-                ImGui::SliderInt("Color", &hair.colorIndex, 0, 4);
+                // ImGui::SliderInt("Color", &hair.colorIndex, 0, 4);
                 ImGui::Checkbox("Highlight", &hair.highlightTop);
                 DimooModel::setHairClusterState(i, hair);
                 ImGui::TreePop();

@@ -123,17 +123,17 @@ static void applyPetalMaterial(int colorIndex, bool highlight) {
         b = saturate(b + 0.07f);
     }
 
-    GLfloat ambient[]  = {r * 0.16f, g * 0.16f, b * 0.16f, 1.0f};
+    GLfloat ambient[]  = {r * 0.26f, g * 0.26f, b * 0.26f, 1.0f};
     GLfloat diffuse[]  = {r, g, b, 1.0f};
     
     // Reduce specular glare for non-highlights to prevent washing out colors
     GLfloat specular[] = {
-        highlight ? 0.98f : 0.45f,
-        highlight ? 0.98f : 0.45f,
-        highlight ? 1.00f : 0.48f,
+        highlight ? 0.98f : 0.15f,
+        highlight ? 0.98f : 0.15f,
+        highlight ? 1.00f : 0.15f,
         1.0f
     };
-    setMaterial(ambient, diffuse, specular, highlight ? 92.0f : 84.0f);
+    setMaterial(ambient, diffuse, specular, highlight ? 92.0f : 22.0f);
 }
 
 static void drawEllipsoid3D(float rx, float ry, float rz, int lats, int longs) {
@@ -183,8 +183,8 @@ static void drawPetal3D(float rx, float ry, float rz, int lats, int longs,
             float y1_u = y * zr1;
 
             // Taper along the local Y-axis (tip at positive Y, base at negative Y)
-            float taper0 = 1.0f - y0_u * y0_u;
-            float taper1 = 1.0f - y1_u * y1_u;
+            float taper0 = 1.0f - clamp(y0_u, 0.0f, 1.0f) * 0.25f;
+            float taper1 = 1.0f - clamp(y1_u, 0.0f, 1.0f) * 0.25f;
 
             // Gradient interpolation along the local Y-axis
             float factor0 = (y0_u + 1.0f) * 0.5f;
@@ -497,11 +497,11 @@ static void drawHairCluster(const Vec3& pos, const Vec3& scale,
     glScalef(1.12f, 1.02f, 1.40f);
     
     // Set material specular and shininess first
-    applyPetalMaterial(colorIndex, false);
+    applyPetalMaterial(0, false);
 
     // Enable GL_COLOR_MATERIAL to combine vertex color gradients with lighting
     glEnable(GL_COLOR_MATERIAL);
-    glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
+    glColorMaterial(GL_FRONT_AND_BACK, GL_DIFFUSE);
 
     // 定义粉紫基准色
     GLfloat pinkCol[] = {0.98f, 0.82f, 0.85f};  // 珍珠粉
@@ -861,7 +861,6 @@ void draw(const DimooVisualState& state) {
     drawButterflySystem(state, t);
     drawDreamParticleSwarm(state, t);
 
-    glEnable(GL_COLOR_MATERIAL);
     glPopMatrix();
     glPopAttrib();
 }
