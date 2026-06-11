@@ -1,0 +1,9 @@
+*.exe
+*.o
+*.obj
+*.log
+error.txt
+output.txt
+scene_review_*.png
+FightingGameCodexCheck.exe
+.git_backup/

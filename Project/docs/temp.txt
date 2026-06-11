@@ -1,0 +1,680 @@
+#include "DimooModel.h"
+
+#include <vector>
+
+namespace DimooModel {
+
+struct Vec3 {
+    float x, y, z;
+    Vec3() : x(0.0f), y(0.0f), z(0.0f) {}
+    Vec3(float px, float py, float pz) : x(px), y(py), z(pz) {}
+};
+
+static Vec3 operator+(const Vec3& a, const Vec3& b) { return Vec3(a.x + b.x, a.y + b.y, a.z + b.z); }
+static Vec3 operator-(const Vec3& a, const Vec3& b) { return Vec3(a.x - b.x, a.y - b.y, a.z - b.z); }
+static Vec3 operator*(const Vec3& a, float s) { return Vec3(a.x * s, a.y * s, a.z * s); }
+
+static float dot(const Vec3& a, const Vec3& b) { return a.x * b.x + a.y * b.y + a.z * b.z; }
+static Vec3 cross(const Vec3& a, const Vec3& b) {
+    return Vec3(a.y * b.z - a.z * b.y,
+                a.z * b.x - a.x * b.z,
+                a.x * b.y - a.y * b.x);
+}
+
+static Vec3 normalize(const Vec3& v) {
+    float len = sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+    if (len <= 0.0001f) {
+        return Vec3(0.0f, 1.0f, 0.0f);
+    }
+    return Vec3(v.x / len, v.y / len, v.z / len);
+}
+
+static float saturate(float v) {
+    return clamp(v, 0.0f, 1.0f);
+}
+
+static float pseudo01(float seed) {
+    return 0.5f + 0.5f * sin(seed * 12.9898f + cos(seed * 4.1414f) * 78.233f);
+}
+
+static void setMaterial(const GLfloat ambient[4], const GLfloat diffuse[4],
+                        const GLfloat specular[4], GLfloat shininess) {
+    glMaterialfv(GL_FRONT_AND_BACK, GL_AMBIENT, ambient);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_DIFFUSE, diffuse);
+    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, specular);
+    glMaterialf(GL_FRONT_AND_BACK, GL_SHININESS, shininess);
+}
+
+static void setPearlMaterial(float r, float g, float b, float shine) {
+    GLfloat ambient[]  = {r * 0.82f, g * 0.82f, b * 0.82f, 1.0f};
+    GLfloat diffuse[]  = {r, g, b, 1.0f};
+    GLfloat specular[] = {0.34f, 0.34f, 0.34f, 1.0f};
+    setMaterial(ambient, diffuse, specular, shine);
+}
+
+static void drawEllipsoid3D(float rx, float ry, float rz, int lats, int longs) {
+    for (int i = 0; i < lats; ++i) {
+        float lat0 = (float)M_PI * (-0.5f + (float)i / (float)lats);
+        float lat1 = (float)M_PI * (-0.5f + (float)(i + 1) / (float)lats);
+        float z0 = sin(lat0);
+        float zr0 = cos(lat0);
+        float z1 = sin(lat1);
+        float zr1 = cos(lat1);
+
+        glBegin(GL_QUAD_STRIP);
+        for (int j = 0; j <= longs; ++j) {
+            float lng = 2.0f * (float)M_PI * (float)j / (float)longs;
+            float x = cos(lng);
+            float y = sin(lng);
+            glNormal3f(x * zr0, y * zr0, z0);
+            glVertex3f(x * zr0 * rx, y * zr0 * ry, z0 * rz);
+            glNormal3f(x * zr1, y * zr1, z1);
+            glVertex3f(x * zr1 * rx, y * zr1 * ry, z1 * rz);
+        }
+        glEnd();
+    }
+}
+
+static void drawSphere3D(float r, int lats, int longs) {
+    drawEllipsoid3D(r, r, r, lats, longs);
+}
+
+static void orientAlongSegment(const Vec3& from, const Vec3& to) {
+    Vec3 dir = to - from;
+    float len = sqrt(dot(dir, dir));
+    glTranslatef(from.x, from.y, from.z);
+    if (len <= 0.0001f) {
+        return;
+    }
+
+    dir = normalize(dir);
+    Vec3 up(0.0f, 1.0f, 0.0f);
+    float c = clamp(dot(up, dir), -1.0f, 1.0f);
+    float angle = acos(c) * 180.0f / (float)M_PI;
+    Vec3 axis = cross(up, dir);
+    float axisLen = sqrt(dot(axis, axis));
+    if (axisLen <= 0.0001f) {
+        if (c < 0.0f) {
+            glRotatef(180.0f, 1.0f, 0.0f, 0.0f);
+        }
+    } else {
+        axis = axis * (1.0f / axisLen);
+        glRotatef(angle, axis.x, axis.y, axis.z);
+    }
+}
+
+static void drawCylinderY(float radiusBottom, float radiusTop, float height, int slices) {
+    glBegin(GL_QUAD_STRIP);
+    for (int i = 0; i <= slices; ++i) {
+        float theta = 2.0f * (float)M_PI * (float)i / (float)slices;
+        float c = cos(theta);
+        float s = sin(theta);
+        glNormal3f(c, 0.0f, s);
+        glVertex3f(c * radiusBottom, 0.0f, s * radiusBottom);
+        glVertex3f(c * radiusTop, height, s * radiusTop);
+    }
+    glEnd();
+}
+
+static void drawCylinderBetween(const Vec3& from, const Vec3& to,
+                                float radiusBottom, float radiusTop, int slices) {
+    Vec3 delta = to - from;
+    float height = sqrt(dot(delta, delta));
+    if (height <= 0.0001f) {
+        return;
+    }
+
+    glPushMatrix();
+    orientAlongSegment(from, to);
+    drawCylinderY(radiusBottom, radiusTop, height, slices);
+    glPopMatrix();
+}
+
+static void drawCapsuleBetween(const Vec3& from, const Vec3& to, float radius, int slices) {
+    Vec3 delta = to - from;
+    float height = sqrt(dot(delta, delta));
+    if (height <= 0.0001f) {
+        return;
+    }
+
+    glPushMatrix();
+    orientAlongSegment(from, to);
+    drawCylinderY(radius, radius, height, slices);
+    glPushMatrix();
+    drawSphere3D(radius, 10, slices);
+    glPopMatrix();
+    glPushMatrix();
+    glTranslatef(0.0f, height, 0.0f);
+    drawSphere3D(radius, 10, slices);
+    glPopMatrix();
+    glPopMatrix();
+}
+
+static void drawLeaf3D(float sx, float sy, float thickness) {
+    glBegin(GL_TRIANGLES);
+    glNormal3f(0.0f, 0.0f, 1.0f);
+    glVertex3f(0.0f, sy * 0.55f, thickness);
+    glVertex3f(-sx * 0.46f, 0.0f, thickness);
+    glVertex3f(0.0f, -sy * 0.55f, thickness);
+    glVertex3f(0.0f, sy * 0.55f, thickness);
+    glVertex3f(sx * 0.46f, 0.0f, thickness);
+    glVertex3f(0.0f, -sy * 0.55f, thickness);
+
+    glNormal3f(0.0f, 0.0f, -1.0f);
+    glVertex3f(0.0f, sy * 0.55f, -thickness);
+    glVertex3f(0.0f, -sy * 0.55f, -thickness);
+    glVertex3f(-sx * 0.46f, 0.0f, -thickness);
+    glVertex3f(0.0f, sy * 0.55f, -thickness);
+    glVertex3f(0.0f, -sy * 0.55f, -thickness);
+    glVertex3f(sx * 0.46f, 0.0f, -thickness);
+    glEnd();
+}
+
+static void drawSoftShadow(float radiusX, float radiusZ, float alpha) {
+    glBegin(GL_TRIANGLE_FAN);
+    glColor4f(0.06f, 0.08f, 0.08f, alpha);
+    glVertex3f(0.0f, 0.0f, 0.0f);
+    for (int i = 0; i <= 32; ++i) {
+        float theta = 2.0f * (float)M_PI * (float)i / 32.0f;
+        glColor4f(0.04f, 0.06f, 0.06f, 0.0f);
+        glVertex3f(cos(theta) * radiusX, 0.0f, sin(theta) * radiusZ);
+    }
+    glEnd();
+}
+
+static void drawAdditiveDisc(float rx, float rz, float alpha,
+                             float cr, float cg, float cb) {
+    glBegin(GL_TRIANGLE_FAN);
+    glColor4f(cr, cg, cb, alpha);
+    glVertex3f(0.0f, 0.0f, 0.0f);
+    for (int i = 0; i <= 28; ++i) {
+        float theta = 2.0f * (float)M_PI * (float)i / 28.0f;
+        glColor4f(cr, cg, cb, 0.0f);
+        glVertex3f(cos(theta) * rx, 0.0f, sin(theta) * rz);
+    }
+    glEnd();
+}
+
+static void drawCurvedFaceDecal(GLuint faceTex, float alpha) {
+    if (!faceTex || alpha <= 0.001f) {
+        return;
+    }
+
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_TEXTURE_BIT | GL_DEPTH_BUFFER_BIT);
+    glDisable(GL_LIGHTING);
+    glDisable(GL_CULL_FACE);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, faceTex);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDepthMask(GL_FALSE);
+    glColor4f(1.0f, 1.0f, 1.0f, alpha);
+
+    const int rows = 12;
+    const int cols = 20;
+    const float halfW = 0.25f;
+    const float halfH = 0.19f;
+    const float centerY = -0.05f;
+    const float frontZ = 0.354f;
+    const float curveX = 0.055f;
+    const float curveY = 0.030f;
+
+    for (int iy = 0; iy < rows; ++iy) {
+        float ty0 = (float)iy / (float)rows;
+        float ty1 = (float)(iy + 1) / (float)rows;
+        float y0 = centerY + (0.5f - ty0) * (2.0f * halfH);
+        float y1 = centerY + (0.5f - ty1) * (2.0f * halfH);
+
+        glBegin(GL_QUAD_STRIP);
+        for (int ix = 0; ix <= cols; ++ix) {
+            float tx = (float)ix / (float)cols;
+            float x = (tx - 0.5f) * (2.0f * halfW);
+            float nx = x / halfW;
+            float ny0 = (y0 - centerY) / halfH;
+            float ny1 = (y1 - centerY) / halfH;
+            float z0 = frontZ - curveX * nx * nx - curveY * ny0 * ny0;
+            float z1 = frontZ - curveX * nx * nx - curveY * ny1 * ny1;
+
+            glTexCoord2f(tx, 1.0f - ty0);
+            glVertex3f(x, y0, z0);
+            glTexCoord2f(tx, 1.0f - ty1);
+            glVertex3f(x, y1, z1);
+        }
+        glEnd();
+    }
+
+    glDisable(GL_TEXTURE_2D);
+    glDepthMask(GL_TRUE);
+    glPopAttrib();
+}
+
+static void drawButterflyWingPlate(float sx, float sy, float thickness) {
+    glBegin(GL_TRIANGLES);
+    glNormal3f(0.0f, 0.0f, 1.0f);
+    glVertex3f(0.0f, 0.0f, thickness);
+    glVertex3f(sx * 0.78f, sy * 0.64f, thickness);
+    glVertex3f(sx * 0.55f, -sy * 0.22f, thickness);
+    glVertex3f(0.0f, -sy * 0.06f, thickness);
+    glVertex3f(sx * 0.55f, -sy * 0.22f, thickness);
+    glVertex3f(sx * 0.38f, -sy * 0.72f, thickness);
+
+    glNormal3f(0.0f, 0.0f, -1.0f);
+    glVertex3f(0.0f, 0.0f, -thickness);
+    glVertex3f(sx * 0.55f, -sy * 0.22f, -thickness);
+    glVertex3f(sx * 0.78f, sy * 0.64f, -thickness);
+    glVertex3f(0.0f, -sy * 0.06f, -thickness);
+    glVertex3f(sx * 0.38f, -sy * 0.72f, -thickness);
+    glVertex3f(sx * 0.55f, -sy * 0.22f, -thickness);
+    glEnd();
+}
+
+static void drawButterfly3D(float wingAngle, float scale, bool glow) {
+    glPushMatrix();
+    glScalef(scale, scale, scale);
+
+    GLfloat bodyAmbient[]  = {0.14f, 0.16f, 0.12f, 1.0f};
+    GLfloat bodyDiffuse[]  = {0.24f, 0.28f, 0.20f, 1.0f};
+    GLfloat bodySpecular[] = {0.12f, 0.14f, 0.10f, 1.0f};
+    setMaterial(bodyAmbient, bodyDiffuse, bodySpecular, 18.0f);
+    drawCapsuleBetween(Vec3(0.0f, -0.04f, 0.0f), Vec3(0.0f, 0.07f, 0.0f), 0.011f, 8);
+
+    GLfloat wingAmbient[]  = {0.60f, 0.72f, 0.58f, 1.0f};
+    GLfloat wingDiffuse[]  = {0.82f, 0.94f, 0.78f, 1.0f};
+    GLfloat wingSpecular[] = {0.18f, 0.22f, 0.16f, 1.0f};
+    if (glow) {
+        wingAmbient[0] = 0.76f; wingAmbient[1] = 0.88f; wingAmbient[2] = 0.78f;
+        wingDiffuse[0] = 0.94f; wingDiffuse[1] = 1.00f; wingDiffuse[2] = 0.90f;
+    }
+    setMaterial(wingAmbient, wingDiffuse, wingSpecular, 24.0f);
+
+    for (int side = -1; side <= 1; side += 2) {
+        float sign = (float)side;
+        glPushMatrix();
+        glTranslatef(sign * 0.018f, 0.02f, 0.0f);
+        glRotatef(sign * wingAngle, 0.0f, 1.0f, 0.0f);
+
+        glPushMatrix();
+        glScalef(sign, 1.0f, 1.0f);
+        drawButterflyWingPlate(0.080f, 0.078f, 0.006f);
+        glTranslatef(0.005f, -0.018f, 0.0f);
+        drawButterflyWingPlate(0.056f, 0.050f, 0.005f);
+        glPopMatrix();
+
+        glPopMatrix();
+    }
+
+    glPopMatrix();
+}
+
+static void drawFaceFeatures(const DimooVisualState& state) {
+    float detail = saturate(state.faceDetail);
+
+    drawCurvedFaceDecal(state.faceTex, 0.96f * detail);
+
+    if (detail <= 0.001f) {
+        return;
+    }
+
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+    glDisable(GL_LIGHTING);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glPushMatrix();
+    glTranslatef(0.0f, -0.055f, 0.360f);
+    drawAdditiveDisc(0.21f, 0.14f, 0.035f * detail, 1.0f, 0.93f, 0.95f);
+    glPopMatrix();
+    glPopAttrib();
+}
+
+static void drawHairCluster(const Vec3& pos, const Vec3& scale,
+                            const Vec3& rot, float r, float g, float b,
+                            bool highlightTop) {
+    glPushMatrix();
+    glTranslatef(pos.x, pos.y, pos.z);
+    glRotatef(rot.x, 1.0f, 0.0f, 0.0f);
+    glRotatef(rot.y, 0.0f, 1.0f, 0.0f);
+    glRotatef(rot.z, 0.0f, 0.0f, 1.0f);
+    setPearlMaterial(r, g, b, 44.0f);
+    drawEllipsoid3D(scale.x, scale.y, scale.z, 12, 16);
+    if (highlightTop) {
+        glPushMatrix();
+        glTranslatef(0.0f, scale.y * 0.10f, scale.z * 0.02f);
+        setPearlMaterial(saturate(r + 0.05f), saturate(g + 0.08f), saturate(b + 0.06f), 50.0f);
+        drawEllipsoid3D(scale.x * 0.76f, scale.y * 0.36f, scale.z * 0.42f, 10, 14);
+        glPopMatrix();
+    }
+    glPopMatrix();
+}
+
+static void drawHairClusters(const DimooVisualState& state, float t, float moveLean) {
+    float sway = sin(t * 2.2f) * (1.0f + state.moveBlend * 0.8f);
+    static const Vec3 hairPos[] = {
+        Vec3(-0.23f, 0.18f, 0.16f), Vec3(-0.12f, 0.22f, 0.19f), Vec3(0.00f, 0.23f, 0.21f),
+        Vec3(0.12f, 0.22f, 0.19f), Vec3(0.23f, 0.18f, 0.16f),
+        Vec3(-0.26f, 0.30f, 0.08f), Vec3(-0.10f, 0.35f, 0.10f), Vec3(0.08f, 0.36f, 0.10f),
+        Vec3(0.25f, 0.30f, 0.08f),
+        Vec3(-0.28f, 0.25f, -0.08f), Vec3(-0.12f, 0.31f, -0.14f), Vec3(0.05f, 0.32f, -0.15f),
+        Vec3(0.22f, 0.26f, -0.10f), Vec3(0.00f, 0.24f, -0.22f),
+        Vec3(-0.31f, 0.02f, 0.07f), Vec3(-0.28f, -0.12f, -0.02f), Vec3(0.31f, 0.02f, 0.07f), Vec3(0.28f, -0.12f, -0.02f)
+    };
+
+    static const Vec3 hairScale[] = {
+        Vec3(0.150f, 0.108f, 0.038f), Vec3(0.145f, 0.114f, 0.040f), Vec3(0.156f, 0.118f, 0.042f),
+        Vec3(0.145f, 0.114f, 0.040f), Vec3(0.150f, 0.108f, 0.038f),
+        Vec3(0.132f, 0.102f, 0.038f), Vec3(0.130f, 0.100f, 0.036f), Vec3(0.130f, 0.100f, 0.036f),
+        Vec3(0.132f, 0.102f, 0.038f),
+        Vec3(0.128f, 0.102f, 0.036f), Vec3(0.122f, 0.098f, 0.034f), Vec3(0.122f, 0.098f, 0.034f),
+        Vec3(0.122f, 0.098f, 0.034f), Vec3(0.128f, 0.102f, 0.036f),
+        Vec3(0.078f, 0.122f, 0.040f), Vec3(0.076f, 0.112f, 0.038f), Vec3(0.078f, 0.122f, 0.040f), Vec3(0.076f, 0.112f, 0.038f)
+    };
+
+    static const Vec3 hairRot[] = {
+        Vec3(12.0f, -24.0f, 16.0f), Vec3(9.0f, -10.0f, 9.0f), Vec3(6.0f, 0.0f, 0.0f),
+        Vec3(9.0f, 10.0f, -9.0f), Vec3(12.0f, 24.0f, -16.0f),
+        Vec3(3.0f, -20.0f, 7.0f), Vec3(2.0f, -8.0f, 3.0f), Vec3(2.0f, 7.0f, -3.0f),
+        Vec3(3.0f, 20.0f, -7.0f),
+        Vec3(0.0f, -28.0f, 10.0f), Vec3(-2.0f, -14.0f, 4.0f), Vec3(-2.0f, 7.0f, -4.0f),
+        Vec3(0.0f, 24.0f, -9.0f), Vec3(0.0f, 0.0f, 0.0f),
+        Vec3(-2.0f, -24.0f, 14.0f), Vec3(-4.0f, -18.0f, 8.0f), Vec3(-2.0f, 24.0f, -14.0f), Vec3(-4.0f, 18.0f, -8.0f)
+    };
+
+    for (int i = 0; i < 18; ++i) {
+        Vec3 p = hairPos[i];
+        Vec3 r = hairRot[i];
+
+        p.y += sin(t * 2.0f + i * 0.37f) * 0.004f;
+        p.x += state.moveBlend * ((i % 2 == 0) ? -0.006f : 0.006f);
+        r.z += sway * ((i < 5) ? 0.28f : ((i < 14) ? 0.20f : 0.16f)) + moveLean * 0.10f;
+
+        float cr = 0.97f;
+        float cg = 0.89f;
+        float cb = 0.91f;
+        bool highlightTop = false;
+
+        if (i >= 5 && i <= 8) {
+            cr = 0.95f; cg = 0.90f; cb = 0.92f;
+            highlightTop = (i == 6 || i == 8);
+        } else if (i >= 9 && i <= 13) {
+            cr = 0.93f; cg = 0.91f; cb = 0.92f;
+            if (i == 10 || i == 12) {
+                cr = 0.85f; cg = 0.93f; cb = 0.88f;
+                highlightTop = true;
+            } else if (i == 11) {
+                cr = 0.86f; cg = 0.91f; cb = 0.84f;
+                highlightTop = true;
+            }
+        } else if (i >= 14) {
+            cr = 0.95f; cg = 0.88f; cb = 0.91f;
+        }
+
+        drawHairCluster(p, hairScale[i], r, cr, cg, cb, highlightTop);
+    }
+}
+
+static void drawHeadAndFace(const DimooVisualState& state, float t, float moveLean) {
+    setPearlMaterial(1.0f, 0.94f, 0.92f, 60.0f);
+    drawEllipsoid3D(0.37f, 0.37f, 0.35f, 18, 24);
+
+    drawHairClusters(state, t, moveLean);
+    drawFaceFeatures(state);
+}
+
+static void drawMascotBody(const DimooVisualState& state, float t) {
+    float handBob = sin(t * 2.8f) * 0.010f;
+    float attackReach = state.attackPulse * 0.07f;
+
+    setPearlMaterial(0.98f, 0.95f, 0.94f, 54.0f);
+    glPushMatrix();
+    glTranslatef(0.0f, 0.45f, 0.0f);
+    drawEllipsoid3D(0.38f, 0.38f, 0.36f, 18, 24);
+    glPopMatrix();
+
+    setPearlMaterial(0.99f, 0.91f, 0.90f, 42.0f);
+    glPushMatrix();
+    glTranslatef(-0.36f, 0.35f + handBob, 0.07f);
+    glRotatef(26.0f, 0.0f, 0.0f, 1.0f);
+    drawEllipsoid3D(0.070f, 0.052f, 0.055f, 10, 14);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(0.35f + attackReach, 0.34f - handBob * 0.6f, 0.11f + state.attackPulse * 0.03f);
+    glRotatef(-18.0f - state.attackPulse * 18.0f, 0.0f, 0.0f, 1.0f);
+    drawEllipsoid3D(0.074f, 0.054f, 0.058f, 10, 14);
+    glPopMatrix();
+}
+
+static void drawVineRing(const DimooVisualState& state, float t) {
+    const int nodeCount = 24;
+    std::vector<Vec3> nodes;
+    nodes.reserve(nodeCount);
+
+    float drag = state.moveBlend * 0.06f;
+    for (int i = 0; i < nodeCount; ++i) {
+        float angle = 2.0f * (float)M_PI * (float)i / (float)nodeCount;
+        float radiusNoise = sin(angle * 3.2f + 0.8f) * 0.07f
+                          + cos(angle * 5.4f + 1.3f) * 0.045f
+                          + sin(t * 0.9f + i * 0.6f) * 0.010f;
+        float radius = 0.63f + radiusNoise;
+        float yScale = 1.00f + 0.12f * sin(angle * 2.0f + 0.5f);
+        float zOffset = sin(angle * 3.5f + 0.2f) * 0.11f
+                      + cos(angle * 6.0f + t * 0.8f) * 0.03f
+                      - cos(angle) * drag;
+        float x = cos(angle) * radius;
+        float y = 0.46f + sin(angle) * radius * yScale;
+        nodes.push_back(Vec3(x, y, zOffset));
+    }
+
+    GLfloat barkAmbient[]  = {0.16f, 0.12f, 0.08f, 1.0f};
+    GLfloat barkDiffuse[]  = {0.36f, 0.27f, 0.16f, 1.0f};
+    GLfloat barkSpecular[] = {0.07f, 0.05f, 0.03f, 1.0f};
+    setMaterial(barkAmbient, barkDiffuse, barkSpecular, 9.0f);
+
+    for (int i = 0; i < nodeCount; ++i) {
+        int next = (i + 1) % nodeCount;
+        float radiusA = 0.036f + 0.012f * pseudo01((float)i * 0.63f + 0.7f);
+        float radiusB = 0.036f + 0.012f * pseudo01((float)next * 0.63f + 0.7f);
+        drawCylinderBetween(nodes[i], nodes[next], radiusA, radiusB, 9);
+        glPushMatrix();
+        glTranslatef(nodes[i].x, nodes[i].y, nodes[i].z);
+        drawSphere3D(radiusA * 0.92f, 8, 8);
+        glPopMatrix();
+    }
+
+    GLfloat leafAmbient[]  = {0.16f, 0.20f, 0.10f, 1.0f};
+    GLfloat leafDiffuse[]  = {0.34f, 0.45f, 0.20f, 1.0f};
+    GLfloat leafSpecular[] = {0.08f, 0.10f, 0.05f, 1.0f};
+    static const int branchIndices[] = {2, 6, 10, 15, 20};
+    for (int k = 0; k < 5; ++k) {
+        int idx = branchIndices[k];
+        Vec3 base = nodes[idx];
+        Vec3 tangent = normalize(nodes[(idx + 1) % nodeCount] - nodes[(idx + nodeCount - 1) % nodeCount]);
+        Vec3 branchDir = normalize(Vec3(tangent.x * 0.32f + cos((float)idx * 1.4f) * 0.72f,
+                                        0.36f + 0.06f * (float)(k % 3),
+                                        tangent.z * 0.20f + sin((float)idx * 0.9f) * 0.68f));
+        Vec3 mid = base + branchDir * (0.09f + 0.02f * (float)(k % 2));
+        Vec3 tip = base + branchDir * (0.15f + 0.03f * pseudo01((float)k * 0.9f));
+
+        setMaterial(barkAmbient, barkDiffuse, barkSpecular, 9.0f);
+        drawCylinderBetween(base, mid, 0.024f, 0.014f, 8);
+        drawCylinderBetween(mid, tip, 0.014f, 0.008f, 8);
+
+        setMaterial(leafAmbient, leafDiffuse, leafSpecular, 16.0f);
+        for (int leaf = 0; leaf < ((k % 2 == 0) ? 2 : 1); ++leaf) {
+            float along = 0.55f + 0.22f * leaf;
+            Vec3 leafPos = base + branchDir * ((0.12f + 0.04f * leaf) * along);
+            glPushMatrix();
+            glTranslatef(leafPos.x, leafPos.y, leafPos.z);
+            glRotatef((float)(idx * 21 + leaf * 47), 0.0f, 1.0f, 0.0f);
+            glRotatef((leaf % 2 == 0) ? 34.0f : -26.0f, 0.0f, 0.0f, 1.0f);
+            glRotatef((float)(8 + k * 4), 1.0f, 0.0f, 0.0f);
+            drawLeaf3D(0.08f + 0.01f * leaf, 0.11f + 0.01f * (k % 3), 0.0035f);
+            glPopMatrix();
+        }
+    }
+
+    if (state.skillPulse > 0.01f) {
+        glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+        glDisable(GL_LIGHTING);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+        glBegin(GL_LINE_LOOP);
+        for (int i = 0; i < nodeCount; ++i) {
+            glColor4f(0.70f, 0.96f, 0.78f, 0.10f + state.skillPulse * 0.14f);
+            glVertex3f(nodes[i].x * 1.03f, nodes[i].y * 1.02f, nodes[i].z);
+        }
+        glEnd();
+        glPopAttrib();
+    }
+}
+
+static void drawDreamParticleSwarm(const DimooVisualState& state, float t) {
+    int particleCount = 8 + (int)(state.skillPulse * 4.0f);
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_POINT_BIT);
+    glDisable(GL_LIGHTING);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+    for (int i = 0; i < particleCount; ++i) {
+        float seed = 0.37f + (float)i * 1.618f;
+        float life = fmod(t * (0.22f + 0.01f * (float)(i % 4)) + pseudo01(seed), 1.0f);
+        float spread = 0.08f + 0.12f * pseudo01(seed * 0.8f) + state.skillPulse * 0.04f;
+        float theta = seed * 3.4f + t * (0.55f + 0.04f * (float)(i % 5));
+        float wobble = sin(t * 2.1f + seed * 5.0f) * 0.030f;
+        float x = cos(theta) * spread + wobble;
+        float y = 0.20f + life * (0.68f + state.skillPulse * 0.18f);
+        float z = sin(theta * 1.3f) * spread * 0.50f;
+        float alpha = (1.0f - life) * (0.14f + state.skillPulse * 0.10f);
+        float size = 2.0f + 1.2f * pseudo01(seed * 2.0f + t);
+        float green = (i % 3 == 0) ? 0.95f : 1.0f;
+
+        glColor4f(0.74f, green, 0.86f, alpha * 0.40f);
+        glPointSize(size * 1.9f);
+        glBegin(GL_POINTS);
+        glVertex3f(x, y, z);
+        glEnd();
+
+        glColor4f(0.98f, 1.0f, 0.98f, alpha);
+        glPointSize(size);
+        glBegin(GL_POINTS);
+        glVertex3f(x, y, z);
+        glEnd();
+    }
+
+    glPointSize(1.0f);
+    glPopAttrib();
+}
+
+static void drawSkillAura(float skillPulse, float t) {
+    if (skillPulse <= 0.01f) {
+        return;
+    }
+
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+    glDisable(GL_LIGHTING);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+    float ring = 0.34f + skillPulse * 0.12f + sin(t * 5.5f) * 0.02f;
+    glPushMatrix();
+    glTranslatef(0.0f, 0.12f, 0.0f);
+    drawAdditiveDisc(ring, ring * 0.58f, 0.08f + skillPulse * 0.08f, 0.72f, 0.98f, 0.82f);
+    glPopMatrix();
+
+    glPushMatrix();
+    glTranslatef(0.0f, 0.42f, 0.0f);
+    drawAdditiveDisc(ring * 0.58f, ring * 0.30f, 0.06f + skillPulse * 0.08f, 0.88f, 1.0f, 0.94f);
+    glPopMatrix();
+
+    glPopAttrib();
+}
+
+static void drawButterflySystem(const DimooVisualState& state, float t) {
+    float bodyFloat = sin(t * 2.0f) * 0.010f;
+    float perchWing = 12.0f + 8.0f * sin(t * 4.0f);
+    glPushMatrix();
+    glTranslatef(0.17f, 0.80f + bodyFloat, 0.23f);
+    glRotatef(12.0f * sin(t * 2.0f), 0.0f, 1.0f, 0.0f);
+    drawButterfly3D(perchWing, 0.78f, false);
+    glPopMatrix();
+
+    if (state.attackPulse > 0.02f) {
+        glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+        glDisable(GL_LIGHTING);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+
+        float trail = 0.22f + state.attackPulse * 0.16f;
+        glBegin(GL_TRIANGLE_STRIP);
+        glColor4f(0.80f, 1.0f, 0.88f, 0.16f * state.attackPulse);
+        glVertex3f(0.18f, 0.62f, 0.10f);
+        glVertex3f(0.18f, 0.67f, 0.10f);
+        glColor4f(0.96f, 1.0f, 0.98f, 0.0f);
+        glVertex3f(trail, 0.64f, 0.08f);
+        glVertex3f(trail + 0.05f, 0.69f, 0.05f);
+        glEnd();
+        glPopAttrib();
+
+        glPushMatrix();
+        glTranslatef(trail + 0.01f, 0.67f, 0.06f);
+        glRotatef(-8.0f, 0.0f, 1.0f, 0.0f);
+        drawButterfly3D(30.0f + 10.0f * sin(t * 22.0f), 0.78f, true);
+        glPopMatrix();
+    }
+}
+
+void draw(const DimooVisualState& state) {
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_LIGHTING_BIT | GL_LINE_BIT | GL_TEXTURE_BIT | GL_DEPTH_BUFFER_BIT);
+    glPushMatrix();
+    glTranslatef(state.x, state.y, state.z);
+
+    if (!state.facingRight) {
+        glScalef(-1.0f, 1.0f, 1.0f);
+    }
+
+    glDisable(GL_TEXTURE_2D);
+    glEnable(GL_LIGHTING);
+    glEnable(GL_NORMALIZE);
+    glEnable(GL_DEPTH_TEST);
+    glDisable(GL_COLOR_MATERIAL);
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+
+    float t = state.time;
+    float walk = sin(t * 5.6f);
+    float floatLift = sin(t * 2.2f) * (0.034f + state.skillPulse * 0.010f);
+    float moveDrift = walk * 0.014f * state.moveBlend;
+    float moveLean = walk * 4.0f * state.moveBlend;
+    float bodyBreath = 1.0f + sin(t * 2.0f) * 0.014f;
+
+    glTranslatef(moveDrift, floatLift, 0.0f);
+    glRotatef(moveLean, 0.0f, 0.0f, 1.0f);
+    glScalef(bodyBreath, bodyBreath + state.moveBlend * 0.025f, bodyBreath);
+
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+    glDisable(GL_LIGHTING);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glPushMatrix();
+    glTranslatef(0.0f, -0.02f - floatLift * 0.35f, 0.0f);
+    drawSoftShadow(0.36f - floatLift * 0.15f, 0.22f - floatLift * 0.10f, 0.18f - floatLift * 0.40f);
+    glPopMatrix();
+    glPopAttrib();
+
+    drawSkillAura(state.skillPulse, t);
+    drawVineRing(state, t);
+
+    drawMascotBody(state, t);
+
+    glPushMatrix();
+    glTranslatef(0.0f, 0.45f + 0.008f * fabs(walk) * state.moveBlend, 0.0f);
+    drawHeadAndFace(state, t, moveLean);
+    glPopMatrix();
+
+    drawButterflySystem(state, t);
+    drawDreamParticleSwarm(state, t);
+
+    glEnable(GL_COLOR_MATERIAL);
+    glPopMatrix();
+    glPopAttrib();
+}
+
+}

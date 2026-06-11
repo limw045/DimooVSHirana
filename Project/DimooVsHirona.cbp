@@ -1,0 +1,176 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes" ?>
+<CodeBlocks_project_file>
+    <FileVersion major="1" minor="6" />
+    <Project>
+        <Option title="DimooVsHirona" />
+        <Option pch_mode="2" />
+        <Option compiler="gcc" />
+        <Option execution_dir="." />
+        <Build>
+            <Target title="Debug">
+                <Option output="FightingGameDebug.exe" prefix_auto="0" extension_auto="0" />
+                <Option object_output="obj/Debug/" />
+                <Option type="1" />
+                <Option compiler="gcc" />
+                <Option execution_dir="." />
+                <Compiler>
+                    <Add option="-g" />
+                </Compiler>
+                <Linker>
+                    <Add option="C:/MinGW/lib/libopengl32.a" />
+                    <Add option="C:/MinGW/lib/libglu32.a" />
+                    <Add directory="." />
+                    <Add library="glut32" />
+                    <Add library="jpeg" />
+                    <Add library="gdiplus" />
+                </Linker>
+            </Target>
+            <Target title="Release">
+                <Option output="FightingGameRelease.exe" prefix_auto="0" extension_auto="0" />
+                <Option object_output="obj/Release/" />
+                <Option type="1" />
+                <Option compiler="gcc" />
+                <Option execution_dir="." />
+                <Compiler>
+                    <Add option="-O2" />
+                </Compiler>
+                <Linker>
+                    <Add option="-s" />
+                    <Add option="C:/MinGW/lib/libopengl32.a" />
+                    <Add option="C:/MinGW/lib/libglu32.a" />
+                    <Add directory="." />
+                    <Add library="glut32" />
+                    <Add library="jpeg" />
+                    <Add library="gdiplus" />
+                </Linker>
+            </Target>
+            <Target title="ViewerDebug">
+                <Option output="DimooViewerDebug.exe" prefix_auto="0" extension_auto="0" />
+                <Option object_output="obj/ViewerDebug/" />
+                <Option type="1" />
+                <Option compiler="gcc" />
+                <Option execution_dir="." />
+                <Compiler>
+                    <Add option="-g" />
+                </Compiler>
+                <Linker>
+                    <Add option="C:/MinGW/lib/libopengl32.a" />
+                    <Add option="C:/MinGW/lib/libglu32.a" />
+                    <Add directory="." />
+                    <Add library="glut32" />
+                    <Add library="jpeg" />
+                    <Add library="gdiplus" />
+                </Linker>
+            </Target>
+            <Target title="ViewerRelease">
+                <Option output="DimooViewerRelease.exe" prefix_auto="0" extension_auto="0" />
+                <Option object_output="obj/ViewerRelease/" />
+                <Option type="1" />
+                <Option compiler="gcc" />
+                <Option execution_dir="." />
+                <Compiler>
+                    <Add option="-O2" />
+                </Compiler>
+                <Linker>
+                    <Add option="-s" />
+                    <Add option="C:/MinGW/lib/libopengl32.a" />
+                    <Add option="C:/MinGW/lib/libglu32.a" />
+                    <Add directory="." />
+                    <Add library="glut32" />
+                    <Add library="jpeg" />
+                    <Add library="gdiplus" />
+                </Linker>
+            </Target>
+        </Build>
+        <Compiler>
+            <Add option="-Wall" />
+            <Add option="-fexceptions" />
+            <Add directory="src" />
+            <Add directory="src/scene" />
+            <Add directory="." />
+            <Add directory="imgui-1.92.8" />
+            <Add directory="imgui-1.92.8/backends" />
+        </Compiler>
+        <Unit filename="src/main.cpp">
+            <Option target="Debug" />
+            <Option target="Release" />
+        </Unit>
+        <Unit filename="src/Game.cpp">
+            <Option target="Debug" />
+            <Option target="Release" />
+        </Unit>
+        <Unit filename="src/DimooModel.cpp">
+            <Option target="Debug" />
+            <Option target="Release" />
+            <Option target="ViewerDebug" />
+            <Option target="ViewerRelease" />
+        </Unit>
+        <Unit filename="src/CGImageLoader.cpp">
+            <Option target="Debug" />
+            <Option target="Release" />
+            <Option target="ViewerDebug" />
+            <Option target="ViewerRelease" />
+        </Unit>
+        <Unit filename="src/scene/Arena.cpp">
+            <Option target="Debug" />
+            <Option target="Release" />
+        </Unit>
+        <Unit filename="src/scene/Camera.cpp">
+            <Option target="Debug" />
+            <Option target="Release" />
+        </Unit>
+        <Unit filename="src/scene/Lighting.cpp">
+            <Option target="Debug" />
+            <Option target="Release" />
+        </Unit>
+        <Unit filename="src/DimooViewer.cpp">
+            <Option target="ViewerDebug" />
+            <Option target="ViewerRelease" />
+        </Unit>
+        <Unit filename="src/viewer_main.cpp">
+            <Option target="ViewerDebug" />
+            <Option target="ViewerRelease" />
+        </Unit>
+        <Unit filename="imgui-1.92.8/imgui.cpp">
+            <Option target="ViewerDebug" />
+            <Option target="ViewerRelease" />
+        </Unit>
+        <Unit filename="imgui-1.92.8/imgui_demo.cpp">
+            <Option target="ViewerDebug" />
+            <Option target="ViewerRelease" />
+        </Unit>
+        <Unit filename="imgui-1.92.8/imgui_draw.cpp">
+            <Option target="ViewerDebug" />
+            <Option target="ViewerRelease" />
+        </Unit>
+        <Unit filename="imgui-1.92.8/imgui_tables.cpp">
+            <Option target="ViewerDebug" />
+            <Option target="ViewerRelease" />
+        </Unit>
+        <Unit filename="imgui-1.92.8/imgui_widgets.cpp">
+            <Option target="ViewerDebug" />
+            <Option target="ViewerRelease" />
+        </Unit>
+        <Unit filename="imgui-1.92.8/backends/imgui_impl_glut.cpp">
+            <Option target="ViewerDebug" />
+            <Option target="ViewerRelease" />
+        </Unit>
+        <Unit filename="imgui-1.92.8/backends/imgui_impl_opengl2.cpp">
+            <Option target="ViewerDebug" />
+            <Option target="ViewerRelease" />
+        </Unit>
+        <Unit filename="src/Common.hpp" />
+        <Unit filename="src/Game.h" />
+        <Unit filename="src/DimooModel.h" />
+        <Unit filename="src/DimooViewer.h" />
+        <Unit filename="src/CGImageLoader.hpp" />
+        <Unit filename="src/scene/Arena.h" />
+        <Unit filename="src/scene/Camera.h" />
+        <Unit filename="src/scene/Lighting.h" />
+        <Extensions>
+            <code_completion />
+            <envvars />
+            <lib_finder disable_auto="1" />
+        </Extensions>
+    </Project>
+</CodeBlocks_project_file>
