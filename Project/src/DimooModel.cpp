@@ -503,25 +503,37 @@ static void drawHairCluster(const Vec3& pos, const Vec3& scale,
     glEnable(GL_COLOR_MATERIAL);
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 
-    // Base color from the palette, tip color transitions to Pearl White
-    int idx = colorIndex % 5;
-    const GLfloat* baseCol = DIMOO_PALETTE[idx];
-    const GLfloat* tipCol = DIMOO_PALETTE[4]; // Pearl White
+    // 定义粉紫基准色
+    GLfloat pinkCol[] = {0.98f, 0.82f, 0.85f};  // 珍珠粉
+    GLfloat lavenderCol[] = {0.88f, 0.84f, 0.94f}; // 薰衣草紫
+    GLfloat whiteCol[] = {0.98f, 0.98f, 0.99f};  // 珍珠白
 
-    // Boost saturation of the base pastel color under bright directional light
-    GLfloat richBaseCol[3];
-    if (idx == 4) {
-        richBaseCol[0] = baseCol[0];
-        richBaseCol[1] = baseCol[1];
-        richBaseCol[2] = baseCol[2];
-    } else {
-        float minVal = baseCol[0];
-        if (baseCol[1] < minVal) minVal = baseCol[1];
-        if (baseCol[2] < minVal) minVal = baseCol[2];
-        richBaseCol[0] = clamp(baseCol[0] - minVal * 0.28f, 0.0f, 1.0f);
-        richBaseCol[1] = clamp(baseCol[1] - minVal * 0.28f, 0.0f, 1.0f);
-        richBaseCol[2] = clamp(baseCol[2] - minVal * 0.28f, 0.0f, 1.0f);
+    // 1. 横向渐变插值（左侧偏紫，右侧偏粉）
+    float tX = clamp((pos.x + 0.35f) / 0.70f, 0.0f, 1.0f);
+    GLfloat baseCol[3];
+    for (int c = 0; c < 3; ++c) {
+        baseCol[c] = lavenderCol[c] * (1.0f - tX) + pinkCol[c] * tX;
     }
+
+    // 2. 纵向渐变插值（根部颜色深，顶部偏白，模拟喷笔明暗）
+    float tY = clamp((pos.y - 0.0f) / 0.45f, 0.0f, 1.0f);
+    // tY 越接近 1 (头顶)，颜色越浅偏白
+    GLfloat finalBaseCol[3];
+    for (int c = 0; c < 3; ++c) {
+        finalBaseCol[c] = baseCol[c] * (1.0f - tY * 0.40f) + whiteCol[c] * (tY * 0.40f);
+    }
+
+    // 发梢始终渐变到白色
+    const GLfloat* tipCol = whiteCol;
+
+    GLfloat richBaseCol[3];
+    // 适度提亮饱和度
+    float minVal = finalBaseCol[0];
+    if (finalBaseCol[1] < minVal) minVal = finalBaseCol[1];
+    if (finalBaseCol[2] < minVal) minVal = finalBaseCol[2];
+    richBaseCol[0] = clamp(finalBaseCol[0] - minVal * 0.15f, 0.0f, 1.0f);
+    richBaseCol[1] = clamp(finalBaseCol[1] - minVal * 0.15f, 0.0f, 1.0f);
+    richBaseCol[2] = clamp(finalBaseCol[2] - minVal * 0.15f, 0.0f, 1.0f);
 
     drawPetal3D(scale.x, scale.y, scale.z, 12, 16, richBaseCol, tipCol, bendX, bendZ);
 
@@ -578,7 +590,7 @@ static void drawHairClusters(const DimooVisualState& state, float t, float moveL
             bendZ -= 0.02f;
         }
 
-        drawHairCluster(p, s, r, i % 5, gHairClusters[i].highlightTop, bendX, bendZ);
+        drawHairCluster(p, s, r, i, gHairClusters[i].highlightTop, bendX, bendZ);
     }
 }
 
