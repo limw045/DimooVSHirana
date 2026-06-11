@@ -504,8 +504,8 @@ static void drawHairCluster(const Vec3& pos, const Vec3& scale,
     glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 
     // 定义粉紫基准色
-    GLfloat pinkCol[] = {0.98f, 0.82f, 0.85f};  // 珍珠粉
-    GLfloat lavenderCol[] = {0.88f, 0.84f, 0.94f}; // 薰衣草紫
+    GLfloat pinkCol[] = {0.98f, 0.58f, 0.68f};  // 珍珠粉 (富色彩度)
+    GLfloat lavenderCol[] = {0.78f, 0.68f, 0.90f}; // 薰衣草紫 (富色彩度)
     GLfloat whiteCol[] = {0.98f, 0.98f, 0.99f};  // 珍珠白
 
     // 1. 横向渐变插值（左侧偏紫，右侧偏粉）
