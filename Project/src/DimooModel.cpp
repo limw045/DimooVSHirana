@@ -353,7 +353,7 @@ static void drawFaceWrap(GLuint faceTex, float alpha) {
         return;
     }
 
-    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_TEXTURE_BIT | GL_DEPTH_BUFFER_BIT);
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_TEXTURE_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
     glDisable(GL_CULL_FACE);
     glEnable(GL_TEXTURE_2D);
     glBindTexture(GL_TEXTURE_2D, faceTex);
@@ -690,14 +690,19 @@ static void drawVineRing(const DimooVisualState& state, float t) {
     if (state.ultPulse > 0.01f) {
         rotationY += state.ultPulse * 720.0f;
     }
-    glRotatef(rotationY, 0.0f, 1.0f, 0.0f);
+    if (state.skillPulse > 0.01f) {
+        rotationY += state.skillPulse * 360.0f;
+    }
 
+    // 2. Apply drag tilt (stationary relative to the body)
     float drag = state.moveBlend * 8.0f;
     glRotatef(-drag, 0.0f, 0.0f, 1.0f);
 
+    // 1. Apply spin rotation
+    glRotatef(rotationY, 0.0f, 1.0f, 0.0f);
+
     const int nodeCount = 24;
-    std::vector<Vec3> nodes;
-    nodes.reserve(nodeCount);
+    Vec3 nodes[nodeCount];
 
     float nodeDrag = state.moveBlend * 0.06f;
     for (int i = 0; i < nodeCount; ++i) {
@@ -709,13 +714,16 @@ static void drawVineRing(const DimooVisualState& state, float t) {
         if (state.ultPulse > 0.01f) {
             radius += state.ultPulse * 0.08f * sin(t * 12.0f + i * 0.8f);
         }
+        if (state.skillPulse > 0.01f) {
+            radius += state.skillPulse * 0.04f * sin(t * 8.0f + i * 1.2f);
+        }
         float yScale = 1.00f + 0.12f * sin(angle * 2.0f + 0.5f);
         float zOffset = sin(angle * 3.5f + 0.2f) * 0.11f
                       + cos(angle * 6.0f + t * 0.8f) * 0.03f
                       - cos(angle) * nodeDrag;
         float x = cos(angle) * radius;
         float y = sin(angle) * radius * yScale;
-        nodes.push_back(Vec3(x, y, zOffset));
+        nodes[i] = Vec3(x, y, zOffset);
     }
 
     GLfloat barkAmbient[]  = {0.16f, 0.12f, 0.08f, 1.0f};
@@ -771,7 +779,7 @@ static void drawVineRing(const DimooVisualState& state, float t) {
         glowIntensity = state.ultPulse;
     }
     if (glowIntensity > 0.01f) {
-        glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+        glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT);
         glDisable(GL_LIGHTING);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -789,7 +797,7 @@ static void drawVineRing(const DimooVisualState& state, float t) {
 
 static void drawDreamParticleSwarm(const DimooVisualState& state, float t) {
     int particleCount = 8 + (int)(state.skillPulse * 4.0f);
-    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_POINT_BIT);
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_POINT_BIT | GL_COLOR_BUFFER_BIT);
     glDisable(GL_LIGHTING);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -829,7 +837,7 @@ static void drawSkillAura(float skillPulse, float t) {
         return;
     }
 
-    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT);
     glDisable(GL_LIGHTING);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -850,7 +858,7 @@ static void drawSkillAura(float skillPulse, float t) {
 
 static void drawButterflySystem(const DimooVisualState& state, float t) {
     if (state.attackPulse > 0.02f) {
-        glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+        glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT);
         glDisable(GL_LIGHTING);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE);
@@ -905,7 +913,7 @@ void draw(const DimooVisualState& state) {
 
     glTranslatef(moveDrift, 0.0f, 0.0f);
 
-    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT);
     glDisable(GL_LIGHTING);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
