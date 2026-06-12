@@ -105,7 +105,7 @@ private:
     void handleBattleAttacks();
     void performHironoAttack(int attackLevel);
     void performDimooAttack(int attackLevel);
-    void spawnDimooButterflies(float x, float y, float z, int count, float spread, bool burst);
+    void spawnDimooButterflies(float x, float y, float z, int count, float spread, bool burst, float r = -1.0f, float g = -1.0f, float b = -1.0f);
     DimooModel::DimooVisualState buildDimooVisualState(float t) const;
     void drawDebugOverlay();
     void drawHUD();

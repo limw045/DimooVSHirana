@@ -159,7 +159,7 @@ void Game::spawnDust(float x, float y, float z, int count) {
     }
 }
 
-void Game::spawnDimooButterflies(float x, float y, float z, int count, float spread, bool burst) {
+void Game::spawnDimooButterflies(float x, float y, float z, int count, float spread, bool burst, float r, float g, float b) {
     for (int i = 0; i < count; ++i) {
         GameParticle p;
         float ring = 0.24f + (rand() % 100) / 100.0f * spread;
@@ -170,9 +170,15 @@ void Game::spawnDimooButterflies(float x, float y, float z, int count, float spr
         p.vx = cos(theta) * (burst ? 0.24f : 0.08f) + (((rand() % 100) / 100.0f) - 0.5f) * 0.06f;
         p.vy = (burst ? 0.18f : 0.10f) + (rand() % 100) / 900.0f;
         p.vz = sin(theta) * (burst ? 0.12f : 0.04f);
-        p.r = burst ? 0.80f : 0.72f;
-        p.g = burst ? 1.00f : 0.96f;
-        p.b = burst ? 0.88f : 0.90f;
+        if (r < 0.0f) {
+            p.r = burst ? 0.80f : 0.72f;
+            p.g = burst ? 1.00f : 0.96f;
+            p.b = burst ? 0.88f : 0.90f;
+        } else {
+            p.r = r;
+            p.g = g;
+            p.b = b;
+        }
         p.a = burst ? 0.56f : 0.34f;
         p.baseAlpha = p.a;
         p.baseSize = burst ? (5.0f + (rand() % 3)) : (3.0f + (rand() % 2));
@@ -543,10 +549,7 @@ void Game::performHironoAttack(int attackLevel) {
 void Game::performDimooAttack(int attackLevel) {
     if (attackLevel == 1) {
         dimooAttackPulse = 1.0f;
-        spawnDimooButterflies(dimooX + (dimooFacingRight ? 0.22f : -0.22f), dimooY + 0.56f, 0.0f, 4, 0.26f, false);
-        for (size_t idx = particles.size() - 4; idx < particles.size(); ++idx) {
-            particles[idx].r = 0.98f; particles[idx].g = 0.68f; particles[idx].b = 0.82f;
-        }
+        spawnDimooButterflies(dimooX + (dimooFacingRight ? 0.22f : -0.22f), dimooY + 0.56f, 0.0f, 4, 0.26f, false, 0.98f, 0.68f, 0.82f);
         if (std::abs(dimooX - hironoX) < 1.1f && std::abs(dimooY - hironoY) < 1.0f) {
             hironoHp -= 8.0f;
             spawnHitSparks(hironoX, hironoY + 0.5f, 0.0f, 15, 0.98f, 0.68f, 0.82f);
@@ -573,10 +576,7 @@ void Game::performDimooAttack(int attackLevel) {
         proj.r = 0.40f; proj.g = 0.85f; proj.b = 0.98f;
         dimooProjectiles.push_back(proj);
 
-        spawnDimooButterflies(proj.x, proj.y, proj.z, 6, 0.25f, false);
-        for (size_t idx = particles.size() - 6; idx < particles.size(); ++idx) {
-            particles[idx].r = 0.40f; particles[idx].g = 0.85f; particles[idx].b = 0.98f;
-        }
+        spawnDimooButterflies(proj.x, proj.y, proj.z, 6, 0.25f, false, 0.40f, 0.85f, 0.98f);
     } else if (attackLevel == 3) {
         dimooUltPulse = 1.5f;
         dimooSkillPulse = 1.35f;
@@ -595,10 +595,9 @@ void Game::performDimooAttack(int attackLevel) {
         }
         
         float dir = (hironoX > dimooX) ? 1.0f : -1.0f;
-        spawnDimooButterflies(dimooX, dimooY + ultLift + 0.55f, dimooZ, 40, 0.88f, true);
+        spawnDimooButterflies(dimooX, dimooY + ultLift + 0.55f, dimooZ, 40, 0.88f, true, 0.78f, 0.60f, 0.98f);
         size_t startIdx = particles.size() - 40;
         for (size_t idx = startIdx; idx < particles.size(); ++idx) {
-            particles[idx].r = 0.78f; particles[idx].g = 0.60f; particles[idx].b = 0.98f;
             particles[idx].vx = dir * (2.8f + (rand() % 100) / 100.0f * 1.5f);
             particles[idx].vy = ((rand() % 100) / 100.0f - 0.25f) * 0.8f;
             particles[idx].vz = ((rand() % 100) / 100.0f - 0.5f) * 0.6f;
