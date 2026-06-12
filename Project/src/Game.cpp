@@ -851,6 +851,43 @@ void Game::draw() {
     }
 
     // --- D. 二维 UI 层渲染 ---
+    if (dimooUltPulse > 0.01f) {
+        // 切换到 2D 屏幕投影
+        glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT); // 添加了 GL_COLOR_BUFFER_BIT 保护混合状态
+        glDisable(GL_LIGHTING);
+        glDisable(GL_DEPTH_TEST);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        glMatrixMode(GL_PROJECTION);
+        glPushMatrix();
+        glLoadIdentity();
+        // 逻辑坐标范围
+        gluOrtho2D(0, 800, 0, 450); 
+
+        glMatrixMode(GL_MODELVIEW);
+        glPushMatrix();
+        glLoadIdentity();
+
+        // 计算泛白色 Alpha (使用正弦波在 1.5s 内平滑淡入淡出，峰值 Alpha 为 0.40)
+        float alpha = sin(dimooUltPulse * M_PI / 1.5f) * 0.40f;
+        alpha = clamp(alpha, 0.0f, 0.40f);
+
+        glColor4f(1.0f, 1.0f, 1.0f, alpha);
+        glBegin(GL_QUADS);
+        glVertex2f(0, 0);
+        glVertex2f(800, 0);
+        glVertex2f(800, 450);
+        glVertex2f(0, 450);
+        glEnd();
+
+        glMatrixMode(GL_PROJECTION);
+        glPopMatrix();
+        glMatrixMode(GL_MODELVIEW);
+        glPopMatrix();
+        glPopAttrib();
+    }
+
     drawHUD();
 }
 
