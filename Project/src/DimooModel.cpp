@@ -613,22 +613,75 @@ static void drawHeadAndFace(const DimooVisualState& state, float t, float moveLe
 }
 
 static void drawMascotBody(const DimooVisualState& state, float t) {
+    float walk = sin(t * 5.6f);
     float handBob = sin(t * 2.8f) * 0.010f;
-    float attackReach = state.attackPulse * 0.07f;
 
+    // 1. 绘制身体躯干 (在 Body 局部空间的 0, 0, 0)
     setPearlMaterial(0.98f, 0.95f, 0.94f, 54.0f);
     drawEllipsoid3D(0.38f, 0.38f, 0.36f, 18, 24);
 
     setPearlMaterial(0.99f, 0.91f, 0.90f, 42.0f);
+
+    // 2. 左手臂渲染 (层级节点)
     glPushMatrix();
+    // 平移到左肩关节
     glTranslatef(-0.36f, -0.10f + handBob, 0.07f);
-    glRotatef(26.0f, 0.0f, 0.0f, 1.0f);
+    
+    // 动作混合旋转计算 (左手臂)
+    float leftRotX = 0.0f;
+    float leftRotY = 0.0f;
+    float leftRotZ = 26.0f; // 初始待机外摆角度
+
+    // A. 行走摆动混合 (前后摆动)
+    leftRotX += walk * 35.0f * state.moveBlend;
+    
+    // B. 技能抬手混合 (双手上举呼唤)
+    float skillFactor = clamp(state.skillPulse, 0.0f, 1.0f);
+    leftRotZ = leftRotZ * (1.0f - skillFactor) + (-45.0f * skillFactor);
+    leftRotX = leftRotX * (1.0f - skillFactor) + (-30.0f * skillFactor);
+
+    // C. 大招张开双臂混合 (T-Pose 状)
+    float ultFactor = clamp(state.ultPulse, 0.0f, 1.0f);
+    leftRotZ = leftRotZ * (1.0f - ultFactor) + (90.0f * ultFactor);
+    leftRotX = leftRotX * (1.0f - ultFactor) + (0.0f * ultFactor);
+
+    glRotatef(leftRotX, 1.0f, 0.0f, 0.0f);
+    glRotatef(leftRotY, 0.0f, 1.0f, 0.0f);
+    glRotatef(leftRotZ, 0.0f, 0.0f, 1.0f);
+    
+    // 绘制手臂球体 (局部坐标设为 0,0,0)
     drawEllipsoid3D(0.070f, 0.052f, 0.055f, 10, 14);
     glPopMatrix();
 
+    // 3. 右手臂渲染 (层级节点)
     glPushMatrix();
-    glTranslatef(0.35f + attackReach, -0.11f - handBob * 0.6f, 0.11f + state.attackPulse * 0.03f);
-    glRotatef(-18.0f - state.attackPulse * 18.0f, 0.0f, 0.0f, 1.0f);
+    // 平移到右肩关节
+    glTranslatef(0.35f, -0.11f - handBob * 0.6f, 0.11f);
+
+    // 动作混合旋转计算 (右手臂)
+    float rightRotX = 0.0f;
+    float rightRotY = 0.0f;
+    float rightRotZ = -18.0f; // 初始待机外摆角度
+
+    // A. 行走摆动混合 (与左臂呈相反相位)
+    rightRotX -= walk * 35.0f * state.moveBlend;
+
+    // B. 普通攻击挥动
+    rightRotZ -= state.attackPulse * 45.0f;
+    rightRotX -= state.attackPulse * 30.0f;
+
+    // C. 技能抬手混合
+    rightRotZ = rightRotZ * (1.0f - skillFactor) + (45.0f * skillFactor);
+    rightRotX = rightRotX * (1.0f - skillFactor) + (-30.0f * skillFactor);
+
+    // D. 大招张开双臂混合 (T-Pose 状)
+    rightRotZ = rightRotZ * (1.0f - ultFactor) + (-90.0f * ultFactor);
+    rightRotX = rightRotX * (1.0f - ultFactor) + (0.0f * ultFactor);
+
+    glRotatef(rightRotX, 1.0f, 0.0f, 0.0f);
+    glRotatef(rightRotY, 0.0f, 1.0f, 0.0f);
+    glRotatef(rightRotZ, 0.0f, 0.0f, 1.0f);
+
     drawEllipsoid3D(0.074f, 0.054f, 0.058f, 10, 14);
     glPopMatrix();
 }
