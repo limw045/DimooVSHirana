@@ -376,7 +376,12 @@ void Game::updateDimooVisuals(float dt) {
     bool burst = false;
     float nextDelay = 0.22f;
 
-    if (dimooSkillPulse > 0.18f) {
+    if (dimooUltPulse > 0.18f) {
+        count = 6;
+        spread = 0.65f + dimooUltPulse * 0.15f;
+        burst = true;
+        nextDelay = 0.05f;
+    } else if (dimooSkillPulse > 0.18f) {
         count = 4;
         spread = 0.46f + dimooSkillPulse * 0.10f;
         burst = true;
@@ -394,7 +399,8 @@ void Game::updateDimooVisuals(float dt) {
 DimooModel::DimooVisualState Game::buildDimooVisualState(float t) const {
     DimooModel::DimooVisualState state;
     state.x = dimooX;
-    state.y = dimooY;
+    float ultLift = 0.23f * clamp(dimooUltPulse, 0.0f, 1.2f);
+    state.y = dimooY + ultLift;
     state.z = dimooZ;
     state.facingRight = dimooFacingRight;
     state.time = t;
@@ -556,17 +562,21 @@ void Game::performDimooAttack(int attackLevel) {
             spawnHitSparks(dimooX + (dimooFacingRight ? 0.8f : -0.8f), dimooY + 0.5f, 0.0f, 5, 0.2f, 0.9f, 0.9f);
         }
     } else if (attackLevel == 3) {
+        dimooUltPulse = 1.5f;
         dimooSkillPulse = 1.35f;
         dimooAttackPulse = 0.8f;
-        dimooUltPulse = 1.5f;
-        spawnDimooButterflies(dimooX, dimooY + 0.72f, 0.0f, 18, 0.78f, true);
+        spawnDimooButterflies(dimooX, dimooY + 0.72f, dimooZ, 25, 0.88f, true);
         if (std::abs(dimooX - hironoX) < 3.0f && std::abs(dimooY - hironoY) < 2.0f) {
             hironoHp -= 30.0f;
             spawnHitSparks(hironoX, hironoY + 0.5f, 0.0f, 40, 0.9f, 0.95f, 1.0f);
-            camera.applyShake(0.45f);
-            arena.triggerLidShake(45.0f);
+            camera.applyShake(0.55f);
+            arena.triggerLidShake(60.0f);
             std::cout << "[Combat] Dimoo ultimate hit Hirono! Hirono HP: " << hironoHp << std::endl;
+        } else {
+            camera.applyShake(0.35f);
+            arena.triggerLidShake(40.0f);
         }
+        spawnDust(dimooX, 0.005f, 0.0f, 12);
     }
 }
 
