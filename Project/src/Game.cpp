@@ -847,27 +847,10 @@ void Game::draw() {
         glEnable(GL_CULL_FACE);
     }
 
-    // 绘制 3D 空间粒子 (火花、落地灰尘)
-    glDisable(GL_LIGHTING);
-    glEnable(GL_BLEND);
-    glDepthMask(GL_FALSE);
+    // 1. 绘制普通的非蝴蝶粒子 (Hit Sparks, Dust 等)
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     for (const auto& p : particles) {
-        if (p.kind == GameParticle::PARTICLE_BUTTERFLY) {
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE);
-
-            glColor4f(p.r, p.g, p.b, p.a * 0.35f);
-            glPointSize(p.size * 2.6f);
-            glBegin(GL_POINTS);
-            glVertex3f(p.x, p.y, p.z);
-            glEnd();
-
-            glColor4f(0.96f, 1.0f, 0.98f, p.a * 0.9f);
-            glPointSize(p.size);
-            glBegin(GL_POINTS);
-            glVertex3f(p.x, p.y, p.z);
-            glEnd();
-        } else {
-            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        if (p.kind != GameParticle::PARTICLE_BUTTERFLY) {
             glColor4f(p.r, p.g, p.b, p.a);
             glPointSize(p.size);
             glBegin(GL_POINTS);
@@ -876,10 +859,45 @@ void Game::draw() {
         }
     }
     glPointSize(1.0f);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDepthMask(GL_TRUE);
     glDisable(GL_BLEND);
+
+    // 2. 渲染 3D 蝴蝶粒子 (需要开启 Lighting 以正确展现 3D 材质)
     glEnable(GL_LIGHTING);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE);
+    for (const auto& p : particles) {
+        if (p.kind == GameParticle::PARTICLE_BUTTERFLY) {
+            glPushMatrix();
+            glTranslatef(p.x, p.y, p.z);
+            
+            // 计算飞行朝向
+            float angleY = atan2(p.vx, p.vz) * 180.0f / (float)M_PI;
+            glRotatef(angleY, 0.0f, 1.0f, 0.0f);
+            
+            // 计算双翼振动频率
+            float wingFlap = 30.0f + 40.0f * sin(p.phase);
+            
+            // 渲染 3D 振翅蝴蝶
+            DimooModel::drawButterfly3D(wingFlap, p.size * 0.016f, true, p.a, p.r, p.g, p.b);
+            glPopMatrix();
+        }
+    }
+
+    // 3. 渲染二技能远程蝴蝶弹体 (同样使用 3D 梦蝶模型)
+    for (const auto& proj : dimooProjectiles) {
+        glPushMatrix();
+        glTranslatef(proj.x, proj.y, proj.z);
+        if (!proj.facingRight) {
+            glScalef(-1.0f, 1.0f, 1.0f);
+        }
+        float wingAngle = 30.0f + 45.0f * sin(proj.phase * 2.2f);
+        DimooModel::drawButterfly3D(wingAngle, proj.size * 0.16f, true, 1.0f, proj.r, proj.g, proj.b);
+        glPopMatrix();
+    }
+
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    glDisable(GL_BLEND);
 
     // --- B. 半透明层渲染 ---
     glDepthMask(GL_FALSE);
