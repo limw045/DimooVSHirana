@@ -226,7 +226,8 @@ void Game::update(float dt) {
     for (auto it = dimooProjectiles.begin(); it != dimooProjectiles.end(); ) {
         it->phase += dt * 12.0f;
         it->x += it->vx * dt;
-        it->y += (it->vy + sin(it->phase * 1.5f) * 0.06f) * dt;
+        // 使用 cos 并在振幅积分时除以角速度，集成后产生约 0.05f（总幅度 0.1f）的显著正弦起伏效果
+        it->y += (it->vy + cos(it->phase * 1.5f) * 0.90f) * dt;
         it->z += it->vz * dt;
         it->life -= dt;
 
@@ -236,8 +237,10 @@ void Game::update(float dt) {
         float dist = sqrt(dx * dx + dy * dy + dz * dz);
 
         bool hit = false;
-        if (dist < 0.82f) {
+        // 只有在比赛未结束且处于战斗状态时才允许碰撞判定和扣血，防止赛后残留弹体攻击导致结果反转
+        if (!matchOver && dist < 0.82f) {
             hironoHp -= 16.0f;
+            if (hironoHp < 0.0f) hironoHp = 0.0f;
             spawnHitSparks(it->x, it->y, it->z, 15, 0.40f, 0.85f, 0.98f);
             spawnDimooButterflies(it->x, it->y, it->z, 14, 0.35f, true, 0.40f, 0.85f, 0.98f);
             camera.applyShake(0.26f);
