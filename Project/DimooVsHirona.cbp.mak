@@ -66,9 +66,9 @@ OBJ_DEBUG = $(OBJDIR_DEBUG)\\src\\main.o $(OBJDIR_DEBUG)\\src\\scene\\Lighting.o
 
 OBJ_RELEASE = $(OBJDIR_RELEASE)\\src\\main.o $(OBJDIR_RELEASE)\\src\\scene\\Lighting.o $(OBJDIR_RELEASE)\\src\\scene\\Camera.o $(OBJDIR_RELEASE)\\src\\scene\\Arena.o $(OBJDIR_RELEASE)\\src\\CGImageLoader.o $(OBJDIR_RELEASE)\\src\\DimooModel.o $(OBJDIR_RELEASE)\\src\\Game.o
 
-OBJ_VIEWERDEBUG = $(OBJDIR_VIEWERDEBUG)\\imgui-1.92.8\\imgui_tables.o $(OBJDIR_VIEWERDEBUG)\\imgui-1.92.8\\backends\\imgui_impl_opengl2.o $(OBJDIR_VIEWERDEBUG)\\imgui-1.92.8\\backends\\imgui_impl_glut.o $(OBJDIR_VIEWERDEBUG)\\imgui-1.92.8\\imgui_widgets.o $(OBJDIR_VIEWERDEBUG)\\imgui-1.92.8\\imgui_draw.o $(OBJDIR_VIEWERDEBUG)\\imgui-1.92.8\\imgui_demo.o $(OBJDIR_VIEWERDEBUG)\\imgui-1.92.8\\imgui.o $(OBJDIR_VIEWERDEBUG)\\src\\viewer_main.o $(OBJDIR_VIEWERDEBUG)\\src\\DimooViewer.o $(OBJDIR_VIEWERDEBUG)\\src\\CGImageLoader.o $(OBJDIR_VIEWERDEBUG)\\src\\DimooModel.o
+OBJ_VIEWERDEBUG = $(OBJDIR_VIEWERDEBUG)\\imgui-1.92.8\\imgui_tables.o $(OBJDIR_VIEWERDEBUG)\\imgui-1.92.8\\backends\\imgui_impl_opengl2.o $(OBJDIR_VIEWERDEBUG)\\imgui-1.92.8\\backends\\imgui_impl_glut.o $(OBJDIR_VIEWERDEBUG)\\imgui-1.92.8\\imgui_widgets.o $(OBJDIR_VIEWERDEBUG)\\imgui-1.92.8\\imgui_draw.o $(OBJDIR_VIEWERDEBUG)\\imgui-1.92.8\\imgui_demo.o $(OBJDIR_VIEWERDEBUG)\\imgui-1.92.8\\imgui.o $(OBJDIR_VIEWERDEBUG)\\src\\viewer_main.o $(OBJDIR_VIEWERDEBUG)\\src\\DimooViewer.o $(OBJDIR_VIEWERDEBUG)\\src\\CGImageLoader.o $(OBJDIR_VIEWERDEBUG)\\src\\DimooModel.o $(OBJDIR_VIEWERDEBUG)\\src\\scene\\Arena.o
 
-OBJ_VIEWERRELEASE = $(OBJDIR_VIEWERRELEASE)\\imgui-1.92.8\\imgui_tables.o $(OBJDIR_VIEWERRELEASE)\\imgui-1.92.8\\backends\\imgui_impl_opengl2.o $(OBJDIR_VIEWERRELEASE)\\imgui-1.92.8\\backends\\imgui_impl_glut.o $(OBJDIR_VIEWERRELEASE)\\imgui-1.92.8\\imgui_widgets.o $(OBJDIR_VIEWERRELEASE)\\imgui-1.92.8\\imgui_draw.o $(OBJDIR_VIEWERRELEASE)\\imgui-1.92.8\\imgui_demo.o $(OBJDIR_VIEWERRELEASE)\\imgui-1.92.8\\imgui.o $(OBJDIR_VIEWERRELEASE)\\src\\viewer_main.o $(OBJDIR_VIEWERRELEASE)\\src\\DimooViewer.o $(OBJDIR_VIEWERRELEASE)\\src\\CGImageLoader.o $(OBJDIR_VIEWERRELEASE)\\src\\DimooModel.o
+OBJ_VIEWERRELEASE = $(OBJDIR_VIEWERRELEASE)\\imgui-1.92.8\\imgui_tables.o $(OBJDIR_VIEWERRELEASE)\\imgui-1.92.8\\backends\\imgui_impl_opengl2.o $(OBJDIR_VIEWERRELEASE)\\imgui-1.92.8\\backends\\imgui_impl_glut.o $(OBJDIR_VIEWERRELEASE)\\imgui-1.92.8\\imgui_widgets.o $(OBJDIR_VIEWERRELEASE)\\imgui-1.92.8\\imgui_draw.o $(OBJDIR_VIEWERRELEASE)\\imgui-1.92.8\\imgui_demo.o $(OBJDIR_VIEWERRELEASE)\\imgui-1.92.8\\imgui.o $(OBJDIR_VIEWERRELEASE)\\src\\viewer_main.o $(OBJDIR_VIEWERRELEASE)\\src\\DimooViewer.o $(OBJDIR_VIEWERRELEASE)\\src\\CGImageLoader.o $(OBJDIR_VIEWERRELEASE)\\src\\DimooModel.o $(OBJDIR_VIEWERRELEASE)\\src\\scene\\Arena.o
 
 all: debug release viewerdebug viewerrelease
 
@@ -152,6 +152,7 @@ before_viewerdebug:
 	cmd /c if not exist $(OBJDIR_VIEWERDEBUG)\\imgui-1.92.8 md $(OBJDIR_VIEWERDEBUG)\\imgui-1.92.8
 	cmd /c if not exist $(OBJDIR_VIEWERDEBUG)\\imgui-1.92.8\\backends md $(OBJDIR_VIEWERDEBUG)\\imgui-1.92.8\\backends
 	cmd /c if not exist $(OBJDIR_VIEWERDEBUG)\\src md $(OBJDIR_VIEWERDEBUG)\\src
+	cmd /c if not exist $(OBJDIR_VIEWERDEBUG)\\src\\scene md $(OBJDIR_VIEWERDEBUG)\\src\\scene
 
 after_viewerdebug: 
 
@@ -193,16 +194,21 @@ $(OBJDIR_VIEWERDEBUG)\\src\\CGImageLoader.o: src\\CGImageLoader.cpp
 $(OBJDIR_VIEWERDEBUG)\\src\\DimooModel.o: src\\DimooModel.cpp
 	$(CXX) $(CFLAGS_VIEWERDEBUG) $(INC_VIEWERDEBUG) -c src\\DimooModel.cpp -o $(OBJDIR_VIEWERDEBUG)\\src\\DimooModel.o
 
+$(OBJDIR_VIEWERDEBUG)\\src\\scene\\Arena.o: src\\scene\\Arena.cpp
+	$(CXX) $(CFLAGS_VIEWERDEBUG) $(INC_VIEWERDEBUG) -c src\\scene\\Arena.cpp -o $(OBJDIR_VIEWERDEBUG)\\src\\scene\\Arena.o
+
 clean_viewerdebug: 
 	cmd /c del /f $(OBJ_VIEWERDEBUG) $(OUT_VIEWERDEBUG)
 	cmd /c rd $(OBJDIR_VIEWERDEBUG)\\imgui-1.92.8
 	cmd /c rd $(OBJDIR_VIEWERDEBUG)\\imgui-1.92.8\\backends
+	cmd /c rd $(OBJDIR_VIEWERDEBUG)\\src\\scene
 	cmd /c rd $(OBJDIR_VIEWERDEBUG)\\src
 
 before_viewerrelease: 
 	cmd /c if not exist $(OBJDIR_VIEWERRELEASE)\\imgui-1.92.8 md $(OBJDIR_VIEWERRELEASE)\\imgui-1.92.8
 	cmd /c if not exist $(OBJDIR_VIEWERRELEASE)\\imgui-1.92.8\\backends md $(OBJDIR_VIEWERRELEASE)\\imgui-1.92.8\\backends
 	cmd /c if not exist $(OBJDIR_VIEWERRELEASE)\\src md $(OBJDIR_VIEWERRELEASE)\\src
+	cmd /c if not exist $(OBJDIR_VIEWERRELEASE)\\src\\scene md $(OBJDIR_VIEWERRELEASE)\\src\\scene
 
 after_viewerrelease: 
 
@@ -244,10 +250,14 @@ $(OBJDIR_VIEWERRELEASE)\\src\\CGImageLoader.o: src\\CGImageLoader.cpp
 $(OBJDIR_VIEWERRELEASE)\\src\\DimooModel.o: src\\DimooModel.cpp
 	$(CXX) $(CFLAGS_VIEWERRELEASE) $(INC_VIEWERRELEASE) -c src\\DimooModel.cpp -o $(OBJDIR_VIEWERRELEASE)\\src\\DimooModel.o
 
+$(OBJDIR_VIEWERRELEASE)\\src\\scene\\Arena.o: src\\scene\\Arena.cpp
+	$(CXX) $(CFLAGS_VIEWERRELEASE) $(INC_VIEWERRELEASE) -c src\\scene\\Arena.cpp -o $(OBJDIR_VIEWERRELEASE)\\src\\scene\\Arena.o
+
 clean_viewerrelease: 
 	cmd /c del /f $(OBJ_VIEWERRELEASE) $(OUT_VIEWERRELEASE)
 	cmd /c rd $(OBJDIR_VIEWERRELEASE)\\imgui-1.92.8
 	cmd /c rd $(OBJDIR_VIEWERRELEASE)\\imgui-1.92.8\\backends
+	cmd /c rd $(OBJDIR_VIEWERRELEASE)\\src\\scene
 	cmd /c rd $(OBJDIR_VIEWERRELEASE)\\src
 
 .PHONY: before_debug after_debug clean_debug before_release after_release clean_release before_viewerdebug after_viewerdebug clean_viewerdebug before_viewerrelease after_viewerrelease clean_viewerrelease

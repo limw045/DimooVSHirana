@@ -2,6 +2,7 @@
 
 #include "CGImageLoader.hpp"
 #include "DimooModel.h"
+#include "scene/Arena.h"
 
 #include "../imgui-1.92.8/imgui.h"
 #include "../imgui-1.92.8/backends/imgui_impl_glut.h"
@@ -62,6 +63,22 @@ struct ViewerState {
     DimooModel::DimooVisualState visual;
     GLuint faceTex;
 
+    // 多模式查看参数与测试粒子属性
+    enum ViewerMode {
+        VIEW_DIMOO = 0,
+        VIEW_BUTTERFLY,
+        VIEW_HIRONO,
+        VIEW_ARENA
+    };
+    ViewerMode viewMode;
+    Arena arena;
+
+    float testWingAngle;
+    float testScale;
+    float testColor[3];
+    float testAlpha;
+    bool testGlow;
+
     ViewerState()
         : width(1280),
           height(800),
@@ -91,10 +108,18 @@ struct ViewerState {
           hairSideSpread(kViewerDefaultHairSideSpread),
           showHairClusterEditor(false),
           faceTexturePath("not loaded"),
-          faceTex(0) {
+          faceTex(0),
+          viewMode(VIEW_DIMOO),
+          testWingAngle(30.0f),
+          testScale(1.0f),
+          testAlpha(1.0f),
+          testGlow(true) {
         clearColor[0] = 0.05f;
         clearColor[1] = 0.07f;
         clearColor[2] = 0.10f;
+        testColor[0] = 0.40f;
+        testColor[1] = 0.85f;
+        testColor[2] = 0.98f;
         visual.x = 0.0f;
         visual.y = 0.0f;
         visual.z = 0.0f;
@@ -403,6 +428,86 @@ static void updateAnimation(float dt) {
     }
 }
 
+static void drawHironoPaper(float x, float y, float z, bool facingRight, float t, GLuint faceTex) {
+    glPushMatrix();
+    glTranslatef(x, y, z);
+    
+    if (!facingRight) {
+        glScalef(-1.0f, 1.0f, 1.0f);
+    }
+    
+    // 呼吸微缩放动画
+    float scaleY = 1.0f + sin(t * 4.0f) * 0.02f;
+    glScalef(1.0f, scaleY, 1.0f);
+    
+    // 1. 红色披风层 (Z = -0.02f)
+    glColor3f(0.72f, 0.08f, 0.08f);
+    glBegin(GL_QUADS);
+    glNormal3f(0.0f, 0.0f, 1.0f);
+    glVertex3f(-0.35f, 0.0f, -0.02f);
+    glVertex3f( 0.15f, 0.0f, -0.02f);
+    glVertex3f( 0.05f, 0.7f, -0.02f);
+    glVertex3f(-0.25f, 0.7f, -0.02f);
+    glEnd();
+    
+    // 2. 绿色外套身体层 (Z = 0.0f)
+    glColor3f(0.15f, 0.38f, 0.22f);
+    glBegin(GL_QUADS);
+    glNormal3f(0.0f, 0.0f, 1.0f);
+    glVertex3f(-0.2f, 0.0f, 0.0f);
+    glVertex3f( 0.2f, 0.0f, 0.0f);
+    glVertex3f( 0.15f, 0.5f, 0.0f);
+    glVertex3f(-0.15f, 0.5f, 0.0f);
+    glEnd();
+    
+    // 3. 脸部贴图层 (Z = 0.02f)
+    if (faceTex) {
+        glEnable(GL_TEXTURE_2D);
+        glBindTexture(GL_TEXTURE_2D, faceTex);
+        glColor3f(1.0f, 1.0f, 1.0f);
+        glBegin(GL_QUADS);
+        glNormal3f(0.0f, 0.0f, 1.0f);
+        glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.3f, 0.45f, 0.02f);
+        glTexCoord2f(1.0f, 0.0f); glVertex3f( 0.3f, 0.45f, 0.02f);
+        glTexCoord2f(1.0f, 1.0f); glVertex3f( 0.3f, 1.05f, 0.02f);
+        glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.3f, 1.05f, 0.02f);
+        glEnd();
+        glDisable(GL_TEXTURE_2D);
+    } else {
+        glColor3f(0.98f, 0.88f, 0.82f);
+        glBegin(GL_QUADS);
+        glNormal3f(0.0f, 0.0f, 1.0f);
+        glVertex3f(-0.3f, 0.45f, 0.02f);
+        glVertex3f( 0.3f, 0.45f, 0.02f);
+        glVertex3f( 0.3f, 1.05f, 0.02f);
+        glVertex3f(-0.3f, 1.05f, 0.02f);
+        glEnd();
+    }
+    
+    // 橙黄色短发层 (Z = 0.03f)
+    glColor3f(0.95f, 0.72f, 0.08f);
+    glBegin(GL_QUADS);
+    glNormal3f(0.0f, 0.0f, 1.0f);
+    glVertex3f(-0.32f, 0.95f, 0.03f);
+    glVertex3f( 0.32f, 0.95f, 0.03f);
+    glVertex3f( 0.25f, 1.12f, 0.03f);
+    glVertex3f(-0.25f, 1.12f, 0.03f);
+    glEnd();
+    
+    // 4. 黄色围巾飘动层 (Z = 0.04f)
+    glColor3f(0.95f, 0.85f, 0.15f);
+    float scarfSway = sin(t * 5.0f) * 0.05f;
+    glBegin(GL_QUADS);
+    glNormal3f(0.0f, 0.0f, 1.0f);
+    glVertex3f(-0.10f, 0.50f, 0.04f);
+    glVertex3f( 0.10f, 0.50f, 0.04f);
+    glVertex3f( 0.25f + scarfSway, 0.25f, 0.04f);
+    glVertex3f( 0.05f + scarfSway, 0.25f, 0.04f);
+    glEnd();
+    
+    glPopMatrix();
+}
+
 static void drawScene() {
     glViewport(0, 0, gViewer.width, gViewer.height);
     glClearColor(gViewer.clearColor[0], gViewer.clearColor[1], gViewer.clearColor[2], 1.0f);
@@ -417,27 +522,85 @@ static void drawScene() {
     setupCamera();
     setupLighting();
 
-    if (gViewer.showGrid) {
+    if (gViewer.showGrid && gViewer.viewMode != ViewerState::VIEW_ARENA) {
         drawFloorGrid();
     }
 
-    if (gViewer.showReferenceBall) {
+    if (gViewer.showReferenceBall && gViewer.viewMode != ViewerState::VIEW_ARENA) {
         drawReferenceBall();
     }
 
-    gViewer.visual.faceTex = gViewer.useFaceTexture ? gViewer.faceTex : 0;
-    DimooModel::setFaceTextureTuning(gViewer.faceUOffset, gViewer.faceVOffset, gViewer.faceUScale, gViewer.faceVScale);
-    DimooModel::setHairAngleTuning(gViewer.hairFrontTilt, gViewer.hairTopTilt, gViewer.hairSideSpread);
+    // 根据选择的目标进行多模式渲染
+    switch (gViewer.viewMode) {
+        case ViewerState::VIEW_DIMOO: {
+            gViewer.visual.faceTex = gViewer.useFaceTexture ? gViewer.faceTex : 0;
+            DimooModel::setFaceTextureTuning(gViewer.faceUOffset, gViewer.faceVOffset, gViewer.faceUScale, gViewer.faceVScale);
+            DimooModel::setHairAngleTuning(gViewer.hairFrontTilt, gViewer.hairTopTilt, gViewer.hairSideSpread);
 
-    glPushMatrix();
-    glScalef(gViewer.modelScale, gViewer.modelScale, gViewer.modelScale);
-    DimooModel::draw(gViewer.visual);
-    glPopMatrix();
+            glPushMatrix();
+            glScalef(gViewer.modelScale, gViewer.modelScale, gViewer.modelScale);
+            DimooModel::draw(gViewer.visual);
+            glPopMatrix();
+            break;
+        }
+
+        case ViewerState::VIEW_BUTTERFLY: {
+            glPushMatrix();
+            glTranslatef(0.0f, 0.45f, 0.0f); // 居中悬浮
+            // 自动缓缓自转
+            glRotatef(gViewer.visual.time * 26.0f, 0.0f, 1.0f, 0.0f);
+            
+            // 渲染全新极坐标 3D 波浪渐变蝴蝶
+            DimooModel::drawButterflyPolar3D(
+                gViewer.testWingAngle,
+                gViewer.testScale * 1.5f,
+                gViewer.testGlow,
+                gViewer.testAlpha,
+                gViewer.testColor[0], gViewer.testColor[1], gViewer.testColor[2]
+            );
+            glPopMatrix();
+            break;
+        }
+
+        case ViewerState::VIEW_HIRONO: {
+            glPushMatrix();
+            glTranslatef(0.0f, 0.12f, 0.0f);
+            glScalef(gViewer.modelScale * 0.85f, gViewer.modelScale * 0.85f, gViewer.modelScale * 0.85f);
+            
+            // 渲染小王子/小野
+            drawHironoPaper(0.0f, 0.0f, 0.0f, gViewer.visual.facingRight, gViewer.visual.time, gViewer.arena.hironoFaceTex);
+            glPopMatrix();
+            break;
+        }
+
+        case ViewerState::VIEW_ARENA: {
+            gViewer.arena.update(0.016f); // 更新玩具箱内的微风飘动等
+            gViewer.arena.drawOpaque();
+            gViewer.arena.drawTransparent();
+            break;
+        }
+    }
 }
 
 static void drawInspectorUi() {
     ImGui::Begin("Dimoo Viewer");
     ImGui::Text("Standalone model inspector");
+
+    ImGui::SeparatorText("Target Inspector");
+    const char* modes[] = { "Dimoo Mascot", "3D Wavy Butterfly", "Prince Hirono", "Battle Arena" };
+    int currentMode = (int)gViewer.viewMode;
+    if (ImGui::Combo("View Target", &currentMode, modes, 4)) {
+        gViewer.viewMode = (ViewerState::ViewerMode)currentMode;
+    }
+
+    if (gViewer.viewMode == ViewerState::VIEW_BUTTERFLY) {
+        ImGui::SeparatorText("3D Butterfly Tuner");
+        ImGui::SliderFloat("Wing Flap Angle", &gViewer.testWingAngle, 0.0f, 75.0f);
+        ImGui::SliderFloat("Butterfly Scale", &gViewer.testScale, 0.1f, 8.0f);
+        ImGui::ColorEdit3("Butterfly Color", gViewer.testColor);
+        ImGui::SliderFloat("Butterfly Alpha", &gViewer.testAlpha, 0.0f, 1.0f);
+        ImGui::Checkbox("Glow Material", &gViewer.testGlow);
+    }
     ImGui::Text("Face texture: %s", gViewer.faceTex ? "loaded" : "missing");
     ImGui::TextWrapped("Path: %s", gViewer.faceTexturePath.c_str());
     ImGui::Checkbox("Use face texture", &gViewer.useFaceTexture);
@@ -580,6 +743,7 @@ void init() {
     ImGui_ImplOpenGL2_Init();
 
     gViewer.faceTex = loadFaceTexture(&gViewer.faceTexturePath);
+    gViewer.arena.init(); // 初始化 3D 玩具箱场景
     DimooModel::resetFaceTextureTuning();
     DimooModel::resetHairAngleTuning();
     DimooModel::resetHairClusterStates();

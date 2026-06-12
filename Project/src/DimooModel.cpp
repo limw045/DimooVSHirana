@@ -440,33 +440,172 @@ static void drawButterflyWingPlate(float sx, float sy, float thickness) {
     glEnd();
 }
 
-void drawButterfly3D(float wingAngle, float scale, bool glow, float alpha, float r, float g, float b) {
+static void drawGradButterflyWingPolar(float sx, float sy, float thickness, float alpha, float r, float g, float b) {
+    // 渲染正面 (GL_TRIANGLE_FAN)
+    glBegin(GL_TRIANGLE_FAN);
+    glNormal3f(0.0f, 0.0f, 1.0f);
+    glVertex3f(0.0f, 0.0f, thickness); // 翅根原点
+
+    const int segments = 64;
+    for (int i = 0; i <= segments; ++i) {
+        float theta = -0.5f * (float)M_PI + (float)M_PI * (float)i / (float)segments;
+        float sinT = sin(theta);
+        float cosT = cos(theta);
+
+        // 极坐标基础造型方程 (前大后小)
+        float baseR = 1.0f;
+        if (theta > 0.0f) {
+            baseR = 0.52f + 0.48f * sinT + 0.35f * cosT;
+        } else {
+            baseR = 0.42f + 0.28f * cosT - 0.15f * sinT;
+        }
+
+        // 叠加高频波折，完美雕刻原图中波浪状蝴蝶外缘
+        float wave = 0.045f * sin(theta * 11.0f);
+        if (theta > 0.3f) {
+            wave += 0.03f * sin(theta * 17.0f);
+        }
+
+        float r_polar = baseR + wave;
+        float vx = r_polar * cosT * sx;
+        float vy = r_polar * sinT * sy;
+
+        // 根据极坐标角度在深蓝至明亮天蓝之间实现绚丽的色彩渐变
+        float factor = (theta + 0.5f * (float)M_PI) / (float)M_PI; // 0 到 1
+        float cr = r * (0.15f + 0.85f * factor);
+        float cg = g * (0.25f + 0.75f * factor);
+        float cb = b * (0.40f + 0.60f * factor);
+
+        // 还原图片左下角后翅的深宝石蓝斑圈特征
+        if (theta < -0.15f && r_polar > 0.45f) {
+            float dist_to_spot = sqrt(pow(theta - (-0.55f), 2) + pow(r_polar - 0.55f, 2));
+            if (dist_to_spot < 0.18f) {
+                cr *= 0.25f;
+                cg *= 0.35f;
+                cb *= 0.65f;
+            }
+        }
+
+        glColor4f(cr, cg, cb, alpha);
+        glVertex3f(vx, vy, thickness);
+    }
+    glEnd();
+
+    // 渲染背面
+    glBegin(GL_TRIANGLE_FAN);
+    glNormal3f(0.0f, 0.0f, -1.0f);
+    glVertex3f(0.0f, 0.0f, -thickness);
+
+    for (int i = segments; i >= 0; --i) {
+        float theta = -0.5f * (float)M_PI + (float)M_PI * (float)i / (float)segments;
+        float sinT = sin(theta);
+        float cosT = cos(theta);
+
+        float baseR = 1.0f;
+        if (theta > 0.0f) {
+            baseR = 0.52f + 0.48f * sinT + 0.35f * cosT;
+        } else {
+            baseR = 0.42f + 0.28f * cosT - 0.15f * sinT;
+        }
+
+        float wave = 0.045f * sin(theta * 11.0f);
+        if (theta > 0.3f) {
+            wave += 0.03f * sin(theta * 17.0f);
+        }
+
+        float r_polar = baseR + wave;
+        float vx = r_polar * cosT * sx;
+        float vy = r_polar * sinT * sy;
+
+        float factor = (theta + 0.5f * (float)M_PI) / (float)M_PI;
+        float cr = r * (0.15f + 0.85f * factor);
+        float cg = g * (0.25f + 0.75f * factor);
+        float cb = b * (0.40f + 0.60f * factor);
+
+        if (theta < -0.15f && r_polar > 0.45f) {
+            float dist_to_spot = sqrt(pow(theta - (-0.55f), 2) + pow(r_polar - 0.55f, 2));
+            if (dist_to_spot < 0.18f) {
+                cr *= 0.25f;
+                cg *= 0.35f;
+                cb *= 0.65f;
+            }
+        }
+
+        glColor4f(cr, cg, cb, alpha);
+        glVertex3f(vx, vy, -thickness);
+    }
+    glEnd();
+
+    // 渲染边缘侧面以产生优雅的三维厚度
+    glBegin(GL_QUAD_STRIP);
+    for (int i = 0; i <= segments; ++i) {
+        float theta = -0.5f * (float)M_PI + (float)M_PI * (float)i / (float)segments;
+        float sinT = sin(theta);
+        float cosT = cos(theta);
+
+        float baseR = 1.0f;
+        if (theta > 0.0f) {
+            baseR = 0.52f + 0.48f * sinT + 0.35f * cosT;
+        } else {
+            baseR = 0.42f + 0.28f * cosT - 0.15f * sinT;
+        }
+
+        float wave = 0.045f * sin(theta * 11.0f);
+        if (theta > 0.3f) {
+            wave += 0.03f * sin(theta * 17.0f);
+        }
+
+        float r_polar = baseR + wave;
+        float vx = r_polar * cosT * sx;
+        float vy = r_polar * sinT * sy;
+
+        float factor = (theta + 0.5f * (float)M_PI) / (float)M_PI;
+        float cr = r * (0.15f + 0.85f * factor);
+        float cg = g * (0.25f + 0.75f * factor);
+        float cb = b * (0.40f + 0.60f * factor);
+
+        if (theta < -0.15f && r_polar > 0.45f) {
+            float dist_to_spot = sqrt(pow(theta - (-0.55f), 2) + pow(r_polar - 0.55f, 2));
+            if (dist_to_spot < 0.18f) {
+                cr *= 0.25f;
+                cg *= 0.35f;
+                cb *= 0.65f;
+            }
+        }
+
+        glNormal3f(cosT, sinT, 0.0f);
+        glColor4f(cr, cg, cb, alpha);
+        glVertex3f(vx, vy, thickness);
+        glVertex3f(vx, vy, -thickness);
+    }
+    glEnd();
+}
+
+void drawButterflyPolar3D(float wingAngle, float scale, bool glow, float alpha, float r, float g, float b) {
     glPushMatrix();
     glScalef(scale, scale, scale);
 
-    // 1. 绘制头部细双触角 (自发光模式以确保极细线条也能够清晰展现)
+    // 1. 绘制头部细双触角
     glDisable(GL_LIGHTING);
     glColor4f(0.18f * alpha, 0.20f * alpha, 0.16f * alpha, alpha);
     glLineWidth(1.5f);
     glBegin(GL_LINES);
-    // 左触角
     glVertex3f(0.0f, 0.07f, 0.0f);
     glVertex3f(-0.016f, 0.11f, 0.005f);
-    // 右触角
     glVertex3f(0.0f, 0.07f, 0.0f);
     glVertex3f(0.016f, 0.11f, 0.005f);
     glEnd();
     glLineWidth(1.0f);
     glEnable(GL_LIGHTING);
 
-    // 2. 绘制修长纤细的身体
+    // 2. 绘制纤细身体
     GLfloat bodyAmbient[]  = {0.14f * alpha, 0.16f * alpha, 0.12f * alpha, alpha};
     GLfloat bodyDiffuse[]  = {0.24f * alpha, 0.28f * alpha, 0.20f * alpha, alpha};
     GLfloat bodySpecular[] = {0.12f * alpha, 0.14f * alpha, 0.10f * alpha, alpha};
     setMaterial(bodyAmbient, bodyDiffuse, bodySpecular, 18.0f);
-    drawCapsuleBetween(Vec3(0.0f, -0.04f, 0.0f), Vec3(0.0f, 0.07f, 0.0f), 0.007f, 8); // 半径由0.011f变细为0.007f，更加秀雅
+    drawCapsuleBetween(Vec3(0.0f, -0.04f, 0.0f), Vec3(0.0f, 0.07f, 0.0f), 0.007f, 8);
 
-    // 3. 绘制单层、干净对称的前后翅膀
+    // 3. 绘制带有 3D 侧边体积的极坐标曲线翅膀
     GLfloat wingAmbient[]  = {r * 0.73f, g * 0.76f, b * 0.74f, alpha};
     GLfloat wingDiffuse[]  = {r, g, b, alpha};
     GLfloat wingSpecular[] = {0.18f, 0.22f, 0.16f, alpha};
@@ -484,14 +623,19 @@ void drawButterfly3D(float wingAngle, float scale, bool glow, float alpha, float
 
         glPushMatrix();
         glScalef(sign, 1.0f, 1.0f);
-        // 只画单个清晰的翅膀（内部已包含前大后小两个三角形），防止出现重叠的双层斑驳残影
-        drawButterflyWingPlate(0.096f, 0.090f, 0.006f);
+        // 调用我们的极坐标波浪渐变网格函数
+        drawGradButterflyWingPolar(0.096f, 0.090f, 0.006f, alpha, r, g, b);
         glPopMatrix();
 
         glPopMatrix();
     }
 
     glPopMatrix();
+}
+
+void drawButterfly3D(float wingAngle, float scale, bool glow, float alpha, float r, float g, float b) {
+    // 代理转发至我们全新的 Polar 3D 蝴蝶绘制逻辑中，全游戏粒子无缝升级
+    drawButterflyPolar3D(wingAngle, scale, glow, alpha, r, g, b);
 }
 
 static void drawFaceFeatures(const DimooVisualState& state) {
