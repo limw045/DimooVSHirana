@@ -444,12 +444,29 @@ void drawButterfly3D(float wingAngle, float scale, bool glow, float alpha, float
     glPushMatrix();
     glScalef(scale, scale, scale);
 
+    // 1. 绘制头部细双触角 (自发光模式以确保极细线条也能够清晰展现)
+    glDisable(GL_LIGHTING);
+    glColor4f(0.18f * alpha, 0.20f * alpha, 0.16f * alpha, alpha);
+    glLineWidth(1.5f);
+    glBegin(GL_LINES);
+    // 左触角
+    glVertex3f(0.0f, 0.07f, 0.0f);
+    glVertex3f(-0.016f, 0.11f, 0.005f);
+    // 右触角
+    glVertex3f(0.0f, 0.07f, 0.0f);
+    glVertex3f(0.016f, 0.11f, 0.005f);
+    glEnd();
+    glLineWidth(1.0f);
+    glEnable(GL_LIGHTING);
+
+    // 2. 绘制修长纤细的身体
     GLfloat bodyAmbient[]  = {0.14f * alpha, 0.16f * alpha, 0.12f * alpha, alpha};
     GLfloat bodyDiffuse[]  = {0.24f * alpha, 0.28f * alpha, 0.20f * alpha, alpha};
     GLfloat bodySpecular[] = {0.12f * alpha, 0.14f * alpha, 0.10f * alpha, alpha};
     setMaterial(bodyAmbient, bodyDiffuse, bodySpecular, 18.0f);
-    drawCapsuleBetween(Vec3(0.0f, -0.04f, 0.0f), Vec3(0.0f, 0.07f, 0.0f), 0.011f, 8);
+    drawCapsuleBetween(Vec3(0.0f, -0.04f, 0.0f), Vec3(0.0f, 0.07f, 0.0f), 0.007f, 8); // 半径由0.011f变细为0.007f，更加秀雅
 
+    // 3. 绘制单层、干净对称的前后翅膀
     GLfloat wingAmbient[]  = {r * 0.73f, g * 0.76f, b * 0.74f, alpha};
     GLfloat wingDiffuse[]  = {r, g, b, alpha};
     GLfloat wingSpecular[] = {0.18f, 0.22f, 0.16f, alpha};
@@ -462,14 +479,13 @@ void drawButterfly3D(float wingAngle, float scale, bool glow, float alpha, float
     for (int side = -1; side <= 1; side += 2) {
         float sign = (float)side;
         glPushMatrix();
-        glTranslatef(sign * 0.018f, 0.02f, 0.0f);
+        glTranslatef(sign * 0.015f, 0.02f, 0.0f); // 贴近身体中轴线
         glRotatef(sign * wingAngle, 0.0f, 1.0f, 0.0f);
 
         glPushMatrix();
         glScalef(sign, 1.0f, 1.0f);
-        drawButterflyWingPlate(0.080f, 0.078f, 0.006f);
-        glTranslatef(0.005f, -0.018f, 0.0f);
-        drawButterflyWingPlate(0.056f, 0.050f, 0.005f);
+        // 只画单个清晰的翅膀（内部已包含前大后小两个三角形），防止出现重叠的双层斑驳残影
+        drawButterflyWingPlate(0.096f, 0.090f, 0.006f);
         glPopMatrix();
 
         glPopMatrix();

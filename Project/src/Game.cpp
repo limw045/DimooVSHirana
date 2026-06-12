@@ -413,22 +413,22 @@ void Game::updateDimooVisuals(float dt) {
     int count = 1;
     float spread = 0.26f;
     bool burst = false;
-    float nextDelay = 0.22f;
+    float nextDelay = 0.35f;
 
     if (dimooUltPulse > 0.18f) {
-        count = 6;
+        count = 1; // 大招期间每次只生成1只点缀大蝴蝶，防止画面被杂乱的蝴蝶群遮挡
         spread = 0.65f + dimooUltPulse * 0.15f;
         burst = true;
-        nextDelay = 0.05f;
+        nextDelay = 0.22f; // 生成间隔拉长
     } else if (dimooSkillPulse > 0.18f) {
-        count = 4;
+        count = 1; // 技能期间每次生成1只
         spread = 0.46f + dimooSkillPulse * 0.10f;
         burst = true;
-        nextDelay = 0.08f;
+        nextDelay = 0.25f;
     } else if (dimooMoveBlend > 0.25f) {
-        count = 2;
+        count = 1;
         spread = 0.32f;
-        nextDelay = 0.16f;
+        nextDelay = 0.45f;
     }
 
     float pr = 0.82f, pg = 0.94f, pb = 0.78f; // 默认环境浅绿
