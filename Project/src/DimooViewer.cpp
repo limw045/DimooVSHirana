@@ -80,7 +80,8 @@ struct ViewerState {
     float testColor[3];
     float testAlpha;
     bool testGlow;
-
+    bool showB612Base;
+ 
     ViewerState()
         : width(1280),
           height(800),
@@ -115,7 +116,8 @@ struct ViewerState {
           testWingAngle(30.0f),
           testScale(1.0f),
           testAlpha(1.0f),
-          testGlow(true) {
+          testGlow(true),
+          showB612Base(true) {
         clearColor[0] = 0.05f;
         clearColor[1] = 0.07f;
         clearColor[2] = 0.10f;
@@ -485,6 +487,9 @@ static void drawScene() {
         }
 
         case ViewerState::VIEW_HIRONO: {
+            HironoModel::setFaceTextureTuning(gViewer.faceUOffset, gViewer.faceVOffset, gViewer.faceUScale, gViewer.faceVScale);
+            HironoModel::setHairAngleTuning(gViewer.hairFrontTilt, gViewer.hairTopTilt, gViewer.hairSideSpread);
+
             glPushMatrix();
             glTranslatef(0.0f, 0.12f, 0.0f);
             glScalef(gViewer.modelScale * 0.85f, gViewer.modelScale * 0.85f, gViewer.modelScale * 0.85f);
@@ -501,7 +506,8 @@ static void drawScene() {
             hVisual.skillPulse = gViewer.visual.skillPulse;
             hVisual.ultPulse = gViewer.visual.ultPulse;
             hVisual.faceDetail = gViewer.visual.faceDetail;
-            hVisual.faceTex = gViewer.arena.hironoFaceTex;
+            hVisual.faceTex = gViewer.useFaceTexture ? gViewer.arena.hironoFaceTex : 0;
+            hVisual.showBase = gViewer.showB612Base;
 
             HironoModel::draw(hVisual);
             glPopMatrix();
@@ -526,6 +532,10 @@ static void drawInspectorUi() {
     int currentMode = (int)gViewer.viewMode;
     if (ImGui::Combo("View Target", &currentMode, modes, 4)) {
         gViewer.viewMode = (ViewerState::ViewerMode)currentMode;
+    }
+
+    if (gViewer.viewMode == ViewerState::VIEW_HIRONO) {
+        ImGui::Checkbox("Show B-612 Moonrock Base", &gViewer.showB612Base);
     }
 
     if (gViewer.viewMode == ViewerState::VIEW_BUTTERFLY) {
@@ -567,23 +577,42 @@ static void drawInspectorUi() {
     ImGui::Checkbox("Edit hair clusters", &gViewer.showHairClusterEditor);
 
     if (gViewer.showHairClusterEditor) {
-        const int hairCount = DimooModel::getHairClusterCount();
-        for (int i = 0; i < hairCount; ++i) {
-            DimooModel::HairClusterState hair = DimooModel::getHairClusterState(i);
-            char label[32];
-            sprintf(label, "Hair %02d", i);
-            if (ImGui::TreeNode(label)) {
-                ImGui::DragFloat3("Pos", hair.pos, 0.0025f, -0.60f, 0.60f);
-                ImGui::DragFloat3("Scale", hair.scale, 0.0020f, 0.005f, 0.35f);
-                ImGui::DragFloat3("Rot", hair.rot, 0.5f, -180.0f, 180.0f);
-                // ImGui::SliderInt("Color", &hair.colorIndex, 0, 4);
-                ImGui::Checkbox("Highlight", &hair.highlightTop);
-                DimooModel::setHairClusterState(i, hair);
-                ImGui::TreePop();
+        if (gViewer.viewMode == ViewerState::VIEW_DIMOO) {
+            const int hairCount = DimooModel::getHairClusterCount();
+            for (int i = 0; i < hairCount; ++i) {
+                DimooModel::HairClusterState hair = DimooModel::getHairClusterState(i);
+                char label[32];
+                sprintf(label, "Hair %02d", i);
+                if (ImGui::TreeNode(label)) {
+                    ImGui::DragFloat3("Pos", hair.pos, 0.0025f, -0.60f, 0.60f);
+                    ImGui::DragFloat3("Scale", hair.scale, 0.0020f, 0.005f, 0.35f);
+                    ImGui::DragFloat3("Rot", hair.rot, 0.5f, -180.0f, 180.0f);
+                    ImGui::Checkbox("Highlight", &hair.highlightTop);
+                    DimooModel::setHairClusterState(i, hair);
+                    ImGui::TreePop();
+                }
             }
-        }
-        if (ImGui::Button("Reset hair clusters")) {
-            DimooModel::resetHairClusterStates();
+            if (ImGui::Button("Reset hair clusters")) {
+                DimooModel::resetHairClusterStates();
+            }
+        } else if (gViewer.viewMode == ViewerState::VIEW_HIRONO) {
+            const int hairCount = HironoModel::getHairClusterCount();
+            for (int i = 0; i < hairCount; ++i) {
+                HironoModel::HairClusterState hair = HironoModel::getHairClusterState(i);
+                char label[32];
+                sprintf(label, "Hair %02d", i);
+                if (ImGui::TreeNode(label)) {
+                    ImGui::DragFloat3("Pos", hair.pos, 0.0025f, -0.60f, 0.60f);
+                    ImGui::DragFloat3("Scale", hair.scale, 0.0020f, 0.040f, 0.350f);
+                    ImGui::DragFloat3("Rot", hair.rot, 0.5f, -180.0f, 180.0f);
+                    ImGui::Checkbox("Highlight", &hair.highlightTop);
+                    HironoModel::setHairClusterState(i, hair);
+                    ImGui::TreePop();
+                }
+            }
+            if (ImGui::Button("Reset hair clusters")) {
+                HironoModel::resetHairClusterStates();
+            }
         }
     }
 

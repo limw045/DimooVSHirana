@@ -23,6 +23,7 @@ struct HironoVisualState {
     float ultPulse;
     float faceDetail;
     GLuint faceTex;
+    bool showBase;
 
     HironoVisualState()
         : x(0.0f), y(0.0f), z(0.0f),
@@ -33,7 +34,8 @@ struct HironoVisualState {
           skillPulse(0.0f),
           ultPulse(0.0f),
           faceDetail(1.0f),
-          faceTex(0) {}
+          faceTex(0),
+          showBase(true) {}
 };
 
 void draw(const HironoVisualState& state);

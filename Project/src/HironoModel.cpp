@@ -53,25 +53,10 @@ static float gHairFrontTilt = kDefaultHairFrontTilt;
 static float gHairTopTilt = kDefaultHairTopTilt;
 static float gHairSideSpread = kDefaultHairSideSpread;
 
-static const HairClusterState kDefaultHairClusters[] = {
-    // Front bangs
-    {{-0.22f, 0.18f, 0.20f}, {0.180f, 0.120f, 0.060f}, {55.0f, -20.0f, 8.0f}, 0, false},
-    {{-0.10f, 0.22f, 0.23f}, {0.175f, 0.130f, 0.065f}, {50.0f,  -8.0f, 4.0f}, 0, false},
-    {{ 0.00f, 0.24f, 0.25f}, {0.185f, 0.135f, 0.070f}, {48.0f,   0.0f, 0.0f}, 0, false},
-    {{ 0.10f, 0.22f, 0.23f}, {0.175f, 0.130f, 0.065f}, {50.0f,   8.0f,-4.0f}, 0, false},
-    {{ 0.22f, 0.18f, 0.20f}, {0.180f, 0.120f, 0.060f}, {55.0f,  20.0f,-8.0f}, 0, false},
-    // Top clusters
-    {{-0.25f, 0.32f, 0.08f}, {0.155f, 0.110f, 0.060f}, {30.0f, -18.0f, 3.0f}, 0, false},
-    {{-0.08f, 0.38f, 0.10f}, {0.150f, 0.105f, 0.055f}, {28.0f,  -7.0f, 1.0f}, 0, true },
-    {{ 0.08f, 0.38f, 0.10f}, {0.150f, 0.105f, 0.055f}, {28.0f,   7.0f,-1.0f}, 0, false},
-    {{ 0.25f, 0.32f, 0.08f}, {0.155f, 0.110f, 0.060f}, {30.0f,  18.0f,-3.0f}, 0, true },
-    // Back and sides
-    {{-0.28f, 0.24f,-0.10f}, {0.145f, 0.105f, 0.055f}, { 6.0f, -22.0f, 4.0f}, 0, false},
-    {{ 0.00f, 0.24f,-0.20f}, {0.145f, 0.105f, 0.055f}, { 4.0f,   0.0f, 0.0f}, 0, false},
-    {{ 0.28f, 0.24f,-0.10f}, {0.145f, 0.105f, 0.055f}, { 6.0f,  22.0f,-4.0f}, 0, false}
-};
-
-static HairClusterState gHairClusters[sizeof(kDefaultHairClusters) / sizeof(kDefaultHairClusters[0])] = {};
+static const int HIRONO_HAIR_COUNT = 65;
+static HairClusterState kDefaultHairClusters[HIRONO_HAIR_COUNT];
+static HairClusterState gHairClusters[HIRONO_HAIR_COUNT] = {};
+static bool gDefaultHairInitialized = false;
 
 static void setMaterial(const GLfloat ambient[4], const GLfloat diffuse[4],
                         const GLfloat specular[4], GLfloat shininess) {
@@ -537,8 +522,6 @@ static void drawHeadAndFace(const HironoVisualState& state, float t, float moveL
 static void drawMascotBody(const HironoVisualState& state, float t) {
     float walk = sin(t * 5.6f);
     float handBob = sin(t * 2.8f) * 0.010f;
-    float skillFactor = clamp(state.skillPulse, 0.0f, 1.0f);
-    float ultFactor = clamp(state.ultPulse, 0.0f, 1.0f);
 
     // Green jacket body
     GLfloat bodyAmbient[]  = {0.05f, 0.15f, 0.08f, 1.0f};
@@ -547,27 +530,59 @@ static void drawMascotBody(const HironoVisualState& state, float t) {
     setMaterial(bodyAmbient, bodyDiffuse, bodySpecular, 12.0f);
     drawEllipsoid3D(0.32f, 0.38f, 0.30f, 18, 24);
 
-    // Sleeves/arms
+    // Double mustard buttons on front chest
+    GLfloat buttonAmbient[]  = {0.35f, 0.25f, 0.02f, 1.0f};
+    GLfloat buttonDiffuse[]  = {0.95f, 0.72f, 0.08f, 1.0f};
+    setMaterial(buttonAmbient, buttonDiffuse, buttonDiffuse, 20.0f);
+    
+    // Top button
+    glPushMatrix();
+    glTranslatef(0.0f, 0.10f, 0.285f);
+    drawEllipsoid3D(0.025f, 0.025f, 0.025f, 8, 8);
+    glPopMatrix();
+    
+    // Bottom button
+    glPushMatrix();
+    glTranslatef(0.0f, -0.02f, 0.285f);
+    drawEllipsoid3D(0.025f, 0.025f, 0.025f, 8, 8);
+    glPopMatrix();
+
+    // Sleeves/arms (Cradling posture holding the rose dome in front)
     setPearlMaterial(0.99f, 0.91f, 0.90f, 42.0f);
     
     // Left Arm
     glPushMatrix();
-    glTranslatef(-0.25f, -0.05f + handBob, 0.12f);
-    float leftRotX = -10.0f + walk * 15.0f * state.moveBlend;
-    float leftRotZ = 12.0f;
-    glRotatef(leftRotX, 1.0f, 0.0f, 0.0f);
-    glRotatef(leftRotZ, 0.0f, 0.0f, 1.0f);
+    glTranslatef(-0.13f, -0.06f + handBob, 0.21f);
+    glRotatef(38.0f, 0.0f, 1.0f, 0.0f);
+    glRotatef(-15.0f, 1.0f, 0.0f, 0.0f);
+    glScalef(1.22f, 1.0f, 1.0f);
     drawEllipsoid3D(0.065f, 0.050f, 0.055f, 10, 14);
     glPopMatrix();
 
     // Right Arm
     glPushMatrix();
-    glTranslatef(0.25f, -0.05f - handBob * 0.6f, 0.12f);
-    float rightRotX = -10.0f - walk * 15.0f * state.moveBlend;
-    float rightRotZ = -12.0f;
-    glRotatef(rightRotX, 1.0f, 0.0f, 0.0f);
-    glRotatef(rightRotZ, 0.0f, 0.0f, 1.0f);
+    glTranslatef(0.13f, -0.06f - handBob * 0.6f, 0.21f);
+    glRotatef(-38.0f, 0.0f, 1.0f, 0.0f);
+    glRotatef(-15.0f, 1.0f, 0.0f, 0.0f);
+    glScalef(1.22f, 1.0f, 1.0f);
     drawEllipsoid3D(0.065f, 0.050f, 0.055f, 10, 14);
+    glPopMatrix();
+
+    // Tiny feet peeking from suit bottom
+    GLfloat feetAmbient[]  = {0.30f, 0.28f, 0.26f, 1.0f};
+    GLfloat feetDiffuse[]  = {0.95f, 0.91f, 0.86f, 1.0f};
+    setMaterial(feetAmbient, feetDiffuse, feetDiffuse, 10.0f);
+    
+    // Left foot
+    glPushMatrix();
+    glTranslatef(-0.10f, -0.38f, 0.05f);
+    drawEllipsoid3D(0.055f, 0.040f, 0.065f, 10, 12);
+    glPopMatrix();
+    
+    // Right foot
+    glPushMatrix();
+    glTranslatef(0.10f, -0.38f, 0.05f);
+    drawEllipsoid3D(0.055f, 0.040f, 0.065f, 10, 12);
     glPopMatrix();
 }
 
@@ -598,6 +613,119 @@ static void drawSkillAura(float skillPulse, float t) {
     
     glPopMatrix();
     glPopAttrib();
+}
+
+static void drawB612Base() {
+    glPushMatrix();
+    // Positioned below Hirono's feet
+    glTranslatef(0.0f, -0.32f, 0.0f);
+    
+    glPushMatrix();
+    glScalef(1.0f, 0.58f, 1.0f); // flatten Y
+
+    // Slate teal-blue-gray material
+    GLfloat baseAmbient[]  = {0.10f, 0.16f, 0.15f, 1.0f};
+    GLfloat baseDiffuse[]  = {0.38f, 0.50f, 0.48f, 1.0f};
+    GLfloat baseSpecular[] = {0.05f, 0.05f, 0.05f, 1.0f};
+    setMaterial(baseAmbient, baseDiffuse, baseSpecular, 15.0f);
+    
+    // Main dome (little asteroid dome)
+    drawSphere3D(0.55f, 16, 20);
+
+    // 5 Crater indentations
+    GLfloat craterAmbient[]  = {0.06f, 0.09f, 0.08f, 1.0f};
+    GLfloat craterDiffuse[]  = {0.22f, 0.28f, 0.27f, 1.0f};
+    setMaterial(craterAmbient, craterDiffuse, baseSpecular, 5.0f);
+    
+    // Crater 1
+    glPushMatrix();
+    glTranslatef(0.24f, 0.12f, 0.38f);
+    drawSphere3D(0.065f, 8, 8);
+    glPopMatrix();
+    
+    // Crater 2
+    glPushMatrix();
+    glTranslatef(-0.32f, 0.08f, 0.26f);
+    drawSphere3D(0.080f, 8, 8);
+    glPopMatrix();
+    
+    // Crater 3
+    glPushMatrix();
+    glTranslatef(0.40f, -0.05f, -0.16f);
+    drawSphere3D(0.075f, 8, 8);
+    glPopMatrix();
+    
+    // Crater 4
+    glPushMatrix();
+    glTranslatef(-0.26f, -0.05f, -0.32f);
+    drawSphere3D(0.090f, 8, 8);
+    glPopMatrix();
+    
+    // Crater 5
+    glPushMatrix();
+    glTranslatef(0.0f, 0.15f, -0.46f);
+    drawSphere3D(0.070f, 8, 8);
+    glPopMatrix();
+
+    glPopMatrix(); // Pop base scale
+    
+    // Plaque "B-612" on front center
+    glPushMatrix();
+    glTranslatef(0.0f, -0.14f, 0.45f); // local coordinates
+    glRotatef(-15.0f, 1.0f, 0.0f, 0.0f); // face slightly up
+    
+    // Cream/beige plaque box
+    GLfloat plaqueAmbient[]  = {0.30f, 0.28f, 0.24f, 1.0f};
+    GLfloat plaqueDiffuse[]  = {0.92f, 0.88f, 0.80f, 1.0f};
+    GLfloat plaqueSpecular[] = {0.05f, 0.05f, 0.05f, 1.0f};
+    setMaterial(plaqueAmbient, plaqueDiffuse, plaqueSpecular, 10.0f);
+    drawEllipsoid3D(0.12f, 0.042f, 0.012f, 8, 10);
+    
+    // Draw "B-612" text using line segments
+    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_LINE_BIT);
+    glDisable(GL_LIGHTING);
+    glLineWidth(2.5f);
+    glColor3f(0.25f, 0.20f, 0.15f); // dark brown
+    
+    glBegin(GL_LINES);
+    
+    // 'B' (starts at x = -0.075f)
+    glVertex3f(-0.075f, -0.020f, 0.013f); glVertex3f(-0.075f,  0.020f, 0.013f);
+    glVertex3f(-0.075f,  0.020f, 0.013f); glVertex3f(-0.050f,  0.020f, 0.013f);
+    glVertex3f(-0.050f,  0.020f, 0.013f); glVertex3f(-0.048f,  0.010f, 0.013f);
+    glVertex3f(-0.048f,  0.010f, 0.013f); glVertex3f(-0.052f,  0.000f, 0.013f);
+    glVertex3f(-0.052f,  0.000f, 0.013f); glVertex3f(-0.075f,  0.000f, 0.013f);
+    glVertex3f(-0.052f,  0.000f, 0.013f); glVertex3f(-0.045f, -0.010f, 0.013f);
+    glVertex3f(-0.045f, -0.010f, 0.013f); glVertex3f(-0.050f, -0.020f, 0.013f);
+    glVertex3f(-0.050f, -0.020f, 0.013f); glVertex3f(-0.075f, -0.020f, 0.013f);
+
+    // '-' (starts at x = -0.035f)
+    glVertex3f(-0.035f,  0.000f, 0.013f); glVertex3f(-0.020f,  0.000f, 0.013f);
+
+    // '6' (starts at x = -0.010f)
+    glVertex3f(-0.010f,  0.020f, 0.013f); glVertex3f(-0.010f, -0.020f, 0.013f);
+    glVertex3f(-0.010f, -0.020f, 0.013f); glVertex3f( 0.010f, -0.020f, 0.013f);
+    glVertex3f( 0.010f, -0.020f, 0.013f); glVertex3f( 0.010f,  0.000f, 0.013f);
+    glVertex3f( 0.010f,  0.000f, 0.013f); glVertex3f(-0.010f,  0.000f, 0.013f);
+    glVertex3f(-0.010f,  0.020f, 0.013f); glVertex3f( 0.008f,  0.020f, 0.013f);
+
+    // '1' (starts at x = 0.025f)
+    glVertex3f( 0.020f,  0.012f, 0.013f); glVertex3f( 0.028f,  0.020f, 0.013f);
+    glVertex3f( 0.028f,  0.020f, 0.013f); glVertex3f( 0.028f, -0.020f, 0.013f);
+    glVertex3f( 0.018f, -0.020f, 0.013f); glVertex3f( 0.038f, -0.020f, 0.013f);
+
+    // '2' (starts at x = 0.050f)
+    glVertex3f( 0.050f,  0.020f, 0.013f); glVertex3f( 0.075f,  0.020f, 0.013f);
+    glVertex3f( 0.075f,  0.020f, 0.013f); glVertex3f( 0.077f,  0.010f, 0.013f);
+    glVertex3f( 0.077f,  0.010f, 0.013f); glVertex3f( 0.050f, -0.020f, 0.013f);
+    glVertex3f( 0.050f, -0.020f, 0.013f); glVertex3f( 0.078f, -0.020f, 0.013f);
+
+    glEnd();
+    
+    glPopAttrib();
+    glPopMatrix();
+    
+    glPopMatrix();
 }
 
 void draw(const HironoVisualState& state) {
@@ -631,16 +759,20 @@ void draw(const HironoVisualState& state) {
 
     glTranslatef(moveDrift, 0.0f, 0.0f);
 
-    // Draw shadow
-    glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT);
-    glDisable(GL_LIGHTING);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-    glPushMatrix();
-    glTranslatef(0.0f, -0.02f, 0.0f);
-    drawSoftShadow(0.32f, 0.20f, 0.18f);
-    glPopMatrix();
-    glPopAttrib();
+    if (state.showBase) {
+        drawB612Base();
+    } else {
+        // Draw shadow
+        glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT | GL_COLOR_BUFFER_BIT);
+        glDisable(GL_LIGHTING);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glPushMatrix();
+        glTranslatef(0.0f, -0.02f, 0.0f);
+        drawSoftShadow(0.32f, 0.20f, 0.18f);
+        glPopMatrix();
+        glPopAttrib();
+    }
 
     glPushMatrix();
     // Body root transform
@@ -726,7 +858,95 @@ void setHairClusterState(int index, const HairClusterState& state) {
 }
 
 void resetHairClusterStates() {
-    for (int i = 0; i < getHairClusterCount(); ++i) {
+    if (!gDefaultHairInitialized) {
+        int idx = 0;
+        float R = 0.385f; // slightly larger than head radius 0.37f
+
+        // Define rows by latitude (in degrees) to create a perfect brick-like overlapping pattern
+        struct RowConfig {
+            float lat;
+            int count;
+            float startAngle;
+            float scaleX, scaleY, scaleZ;
+        };
+
+        RowConfig rows[] = {
+            { 82.0f,  1,   0.0f,  0.160f, 0.125f, 0.055f },
+            { 66.0f,  6,   0.0f,  0.170f, 0.130f, 0.058f },
+            { 48.0f, 12,  15.0f,  0.180f, 0.135f, 0.060f },
+            { 30.0f, 16,   0.0f,  0.185f, 0.140f, 0.062f },
+            { 12.0f, 16,  11.25f, 0.185f, 0.140f, 0.062f },
+            { -6.0f, 10,   0.0f,  0.180f, 0.135f, 0.060f }, // bangs & sides
+            { -24.0f, 4,  45.0f,  0.165f, 0.125f, 0.055f }  // back neck lower layer
+        };
+
+        for (int r = 0; r < 7; ++r) {
+            float latRad = rows[r].lat * 3.14159265f / 180.0f;
+            float cosLat = cos(latRad);
+            float sinLat = sin(latRad);
+
+            for (int c = 0; c < rows[r].count; ++c) {
+                float angleDeg = rows[r].startAngle + (360.0f / rows[r].count) * c;
+                float angleRad = angleDeg * 3.14159265f / 180.0f;
+
+                // Skip Hirono's face region in the lower rows to avoid clipping through eyes/cheeks texture
+                if (rows[r].lat < 0.0f) {
+                    float normAngle = angleDeg;
+                    while (normAngle > 180.0f) normAngle -= 360.0f;
+                    while (normAngle < -180.0f) normAngle += 360.0f;
+
+                    // Row 5: Skip face (-55 to 55 degrees)
+                    if (rows[r].lat > -15.0f && fabs(normAngle) < 55.0f) {
+                        continue;
+                    }
+                    // Row 6: Skip neck/face (-85 to 85 degrees)
+                    if (rows[r].lat <= -15.0f && fabs(normAngle) < 85.0f) {
+                        continue;
+                    }
+                }
+
+                if (idx >= HIRONO_HAIR_COUNT) break;
+
+                kDefaultHairClusters[idx].pos[0] = R * cosLat * sin(angleRad);
+                kDefaultHairClusters[idx].pos[1] = R * sinLat;
+                kDefaultHairClusters[idx].pos[2] = R * cosLat * cos(angleRad) * 0.96f; // slightly flatten z
+
+                kDefaultHairClusters[idx].scale[0] = rows[r].scaleX;
+                kDefaultHairClusters[idx].scale[1] = rows[r].scaleY;
+                kDefaultHairClusters[idx].scale[2] = rows[r].scaleZ;
+
+                // Orientation: pitch (X) to tilt down along sphere surface, yaw (Y) to follow longitude
+                kDefaultHairClusters[idx].rot[0] = rows[r].lat + 38.0f;
+                kDefaultHairClusters[idx].rot[1] = angleDeg;
+                kDefaultHairClusters[idx].rot[2] = -0.3f * angleDeg; // symmetrical roll
+
+                kDefaultHairClusters[idx].colorIndex = 0;
+                kDefaultHairClusters[idx].highlightTop = (rows[r].lat > 40.0f && c % 3 == 0);
+
+                idx++;
+            }
+        }
+
+        // Fill remaining slots with hidden nodes
+        while (idx < HIRONO_HAIR_COUNT) {
+            kDefaultHairClusters[idx].pos[0] = 0.0f;
+            kDefaultHairClusters[idx].pos[1] = -10.0f;
+            kDefaultHairClusters[idx].pos[2] = 0.0f;
+            kDefaultHairClusters[idx].scale[0] = 0.05f;
+            kDefaultHairClusters[idx].scale[1] = 0.05f;
+            kDefaultHairClusters[idx].scale[2] = 0.05f;
+            kDefaultHairClusters[idx].rot[0] = 0.0f;
+            kDefaultHairClusters[idx].rot[1] = 0.0f;
+            kDefaultHairClusters[idx].rot[2] = 0.0f;
+            kDefaultHairClusters[idx].colorIndex = 0;
+            kDefaultHairClusters[idx].highlightTop = false;
+            idx++;
+        }
+
+        gDefaultHairInitialized = true;
+    }
+
+    for (int i = 0; i < HIRONO_HAIR_COUNT; ++i) {
         gHairClusters[i] = kDefaultHairClusters[i];
     }
 }
