@@ -82,6 +82,18 @@ public:
     float dimooUltPulse;
     float dimooButterflyTimer;
 
+    struct Projectile {
+        float x, y, z;
+        float vx, vy, vz;
+        float size;
+        float phase;
+        float life;
+        float maxLife;
+        bool facingRight;
+        float r, g, b;
+    };
+    std::vector<Projectile> dimooProjectiles;
+
     void spawnHitSparks(float x, float y, float z, int count, float r, float g, float b);
     void spawnDust(float x, float y, float z, int count);
 

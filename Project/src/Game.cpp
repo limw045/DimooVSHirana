@@ -260,7 +260,7 @@ void Game::updateBattle(float dt) {
     handleBattleMovement(dt);
     
     // Player 1 (小野) 重力与落地扬尘
-    if (hironoY > 0.0f) {
+    if (hironoY > 0.0f || hironoVy > 0.0f) {
         hironoVy -= GRAVITY * dt;
         hironoY += hironoVy * dt;
         if (hironoY <= 0.0f) {
@@ -272,7 +272,7 @@ void Game::updateBattle(float dt) {
 
     // Player 2 (Dimoo) 重力与落地扬尘 (盘坐漂浮，高度最低为 0.12f)
     const float DIMOO_REST_Y = 0.12f;
-    if (dimooY > DIMOO_REST_Y) {
+    if (dimooY > DIMOO_REST_Y || dimooVy > 0.0f) {
         dimooVy -= GRAVITY * dt;
         dimooY += dimooVy * dt;
         if (dimooY <= DIMOO_REST_Y) {
@@ -479,11 +479,11 @@ void Game::handleBattleMovement(float dt) {
     dimooX += dimooDir * moveSpeed * dt;
 
     if (input.hirono_upQueued && hironoY <= 0.001f) {
-        hironoVy = 5.5f;
+        hironoVy = 6.8f;
     }
 
     if (input.dimoo_upQueued && dimooY <= 0.121f) {
-        dimooVy = 5.5f;
+        dimooVy = 6.8f;
     }
 
     input.hirono_upQueued = false;
