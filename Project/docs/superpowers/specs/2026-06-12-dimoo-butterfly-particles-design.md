@@ -1,6 +1,6 @@
 # Dimoo 3D 蝴蝶粒子与远程二/三技能设计规格书 (Dimoo 3D Butterfly Particles & Ranged Attack Design Spec)
 
-本文档记录了为 Dimoo 3D 模型设计的蝴蝶粒子 3D 化、二技能远程梦蝶弹射以及大招（蝴蝶梦境）超宽屏判定与狂澜特效的详细方案。
+本文档记录了为 Dimoo 3D 模型设计的蝴蝶粒子 3D 化、二技能远程梦蝶弹射、大招（蝴蝶梦境）超宽屏判定与狂澜特效，以及跳跃机制增强的详细方案。
 
 ---
 
@@ -64,43 +64,46 @@ std::vector<Projectile> dimooProjectiles;
 ```
 
 ### 3.2 触发逻辑 (Skill Trigger)
-在 `Game::performDimooAttack(2)` 中：
-* 实例化一个 Projectile，起始位置位于 Dimoo 前方 `Y = dimooY + 0.62f`，大小 `size = 1.5f`。
-* 设置颜色为梦幻青蓝：`r = 0.40f, g = 0.85f, b = 0.98f`。
-* 飞行速度 `vx = dimooFacingRight ? 3.0f : -3.0f`。
-* 在起始处爆散 6 只小型 3D 青蓝梦蝶作为辅助蓄力特效。
+当施放二技能时，实例化一个 Projectile，起始位置位于 Dimoo 前方 `Y = dimooY + 0.62f`，大小 `size = 1.5f`，颜色为梦幻青蓝。飞行速度 `vx = dimooFacingRight ? 3.0f : -3.0f`。
 
 ### 3.3 飞行与碰撞判定 (Flight & Hit Detection)
-在 `Game::update` 中：
-* **运动物理**：`x` 轴横移，同时 `y` 轴施加 `sin(phase * 1.5f) * 0.05f` 的正弦扰动。
-* **碰撞检测**：检测弹体与 Hirono 中心的 3D 距离，当 `dist < 0.8f` 时判定命中：
-  - Hirono HP 减少 `16.0f`。
-  - 命中点爆散出 `14` 只 3D 青蓝小蝴蝶作为命中效果，产生蓝色火花，相机抖动。
-  - 弹体销毁。
-* **边界销毁**：若弹体横向超出 `±4.5f` 或生命周期 `2.0s` 耗尽，则自动销毁。
+在 `Game::update` 中更新位置，并检测弹体与 Hirono 中心的 3D 距离。当 `dist < 0.8f` 时判定命中：
+  - Hirono HP 减少 `16.0f`，命中点爆散出 14 只 3D 青蓝小蝴蝶，相机抖动，弹体销毁。
+  - 飞出边界或超时自动销毁。
 
 ---
 
 ## 4. 三技能（大招）重构：梦境狂澜远程判定 (Ultimate: Dream Torrent Ranged Hit)
 
-### 4.1 判定范围扩大
-* 在 `Game::performDimooAttack(3)` 中，将大招命中判定范围由 `3.0f` 扩大至横向 `8.0f`。
-
-### 4.2 梦境狂澜特效 (Butterfly Torrent)
-* 施放大招时，从 Dimoo 处向 Hirono 喷射 40 只高速飞行的 **淡紫色 3D 梦蝶** (RGB: `0.78f, 0.60f, 0.98f`)，如浪潮般扑天盖地压向对手，实现完美的视觉引导与冲击感。
+* **范围扩大**：判定范围扩大至横向 `8.0f`，只要敌人在该范围内均会受击。
+* **蝴蝶狂澜**：施放时向 Hirono 方向喷射 40 只高速飞行的淡紫色 3D 梦蝶。
 
 ---
 
-## 5. 拟修改文件清单 (Proposed File Changes)
+## 5. 跳跃机制与闪避判定增强 (Jumping & Dodging Mechanism)
+
+为了让玩家能够有效闪避上述远程攻击和判定，对游戏内的跳跃高度与伤害检测进行如下增强：
+
+### 5.1 提升跳跃高度
+* **修改类**：`Game`
+* **逻辑**：将双方角色起跳时的初速度 `Vy` 从 `5.5f` 提升至 `6.8f`。
+  - 这样，角色的最大跳跃高度将从约 `1.0f` 提高到约 `1.54f`，能更容易滞空躲避横向飞来的远程蝴蝶以及大招判定。
+
+### 5.2 精确 Y 轴碰撞判定
+* 所有近身和远程判定逻辑均加入严格的 Y 轴高度差计算，确保玩家在跳跃到半空时，能完全闪避地面上的普攻判定与飞来的蝴蝶弹体。
+
+---
+
+## 6. 拟修改文件清单 (Proposed File Changes)
 
 - **[DimooModel.h](file:///f:/Degree/Last%20Sem/TCG/Project/src/DimooModel.h)**：
-  - 导出 `drawButterfly3D` 并支持自定义 `r, g, b`。
+  - 导出 `drawButterfly3D` 并支持自定义颜色及透明度。
 - **[DimooModel.cpp](file:///f:/Degree/Last%20Sem/TCG/Project/src/DimooModel.cpp)**：
-  - 将 `drawButterfly3D` 去除 `static` 限制，并支持 `alpha` 渐变与自定义 RGB。
+  - 将 `drawButterfly3D` 改为非静态，并接入 `alpha` 与自定义 RGB。
 - **[Game.h](file:///f:/Degree/Last%20Sem/TCG/Project/src/Game.h)**：
   - 新增 `Projectile` 结构体及 `dimooProjectiles` 容器。
 - **[Game.cpp](file:///f:/Degree/Last%20Sem/TCG/Project/src/Game.cpp)**：
-  - 在 `update` 中实现远程弹体的前进、正弦振荡、生命衰减和与 Hirono 的碰撞检测。
-  - 在 `performDimooAttack` 中，将二技能改为发射弹体，大招扩大范围至 `8.0f` 并喷射指向敌人的快速淡紫色蝴蝶雨。
-  - 普攻、二技能、大招以及定时器触发时，分配粉色、青蓝色、淡紫色的粒子颜色。
-  - 在 `draw` 中渲染所有 `dimooProjectiles` 并更新粒子循环中的 `PARTICLE_BUTTERFLY` 渲染逻辑为对应颜色的 3D 蝴蝶。
+  - 将双方角色跳跃初速度提升至 `6.8f`。
+  - 在 `update` 中实现远程弹体运动与碰撞检测。
+  - 在 `performDimooAttack` 中重构二、三技能判定与特效。
+  - 在 `draw` 中渲染所有弹体并使用 3D 蝴蝶绘制 `PARTICLE_BUTTERFLY` 粒子。
