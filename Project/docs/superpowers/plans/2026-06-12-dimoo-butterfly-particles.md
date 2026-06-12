@@ -2,10 +2,13 @@
 
 > **面向 AI 代理的工作者：** 必需子技能：使用 superpowers:subagent-driven-development（推荐）或 superpowers:executing-plans 逐任务实现此计划。步骤使用复选框（`- [ ]`）语法来跟踪进度。
 
-**目标：** 重构 Dimoo 粒子系统，使蝴蝶粒子升级为 3D 骨骼振翅模型；将二技能重构为可跳跃闪避的远程梦蝶弹体攻击；将大招横向攻击范围扩大至 `8.0f` 并喷射铺天盖地的蝴蝶狂澜；修复重力更新 Bug 并将起跳速度提升至 `6.8f`，确保玩家可以通过跳跃精确闪避蝴蝶弹体和普攻。
+**目标：** 重构 Dimoo 粒子系统，使蝴蝶粒子升级为 3D 骨骼振翅模型；将二技能重构为可跳跃闪避的远程梦蝶弹体攻击；将大招横向攻击范围扩大至 `8.0f` 并喷射铺天盖地的蝴蝶狂澜；修复重力更新 Bug 并将起跳速度提升至 `6.8f`，确保玩家可以通过跳跃精确闪避蝴蝶弹体和普攻；调整藤蔓环（树枝）定位至身体后侧且平时静止，并实现施法自转后完美归零归位。
 
 **架构：**
-1. **DimooModel 接口化**：将 `drawButterfly3D` 从 `static` 改为全局导出，新增 `alpha` 及 `r, g, b` 材质渐变和色彩参数。
+1. **DimooModel 接口化与藤蔓重构**：
+   - 将 `drawButterfly3D` 从 `static` 改为全局导出，新增 `alpha` 及 `r, g, b` 材质渐变和色彩参数。
+   - 在 `DimooModel.cpp` 中将藤蔓环（Vine Ring）渲染位置后移 Z 轴 `-0.15f`，使其平时处于后侧。
+   - 移除常态时间自转。在 `drawVineRing` 中应用归位自转插值公式（Skill 进度自转 720°，Ult 进度自转 1080°），最终完美归零。
 2. **弹体系统实现**：在 `Game` 类中增加弹体 vector 容器。在二技能施放时实例化弹体。每一帧在 `Game::update` 中更新其坐标（包含 X 轴平移与 Y 轴正弦飞舞），并检测与对手的 3D 距离，命中后触发伤害与爆炸特效。
 3. **粒子 3D 化与配色**：在 `Game::draw` 渲染粒子时，将 `PARTICLE_BUTTERFLY` 渲染替换为 `drawButterfly3D`，由速度决定其 Yaw 朝向，由生命周期决定淡出与扇翅，并根据平A（粉色）、二技能（青蓝色）、大招（淡紫色）应用三种不同的色彩。
 4. **跳跃失效修复与高度提升**：
@@ -19,7 +22,10 @@
 ## 拟创建/修改的文件与职责
 
 1. **[DimooModel.h](file:///f:/Degree/Last%20Sem/TCG/Project/src/DimooModel.h)**: 导出 `drawButterfly3D` 接口，支持自定义颜色与透明度。
-2. **[DimooModel.cpp](file:///f:/Degree/Last%20Sem/TCG/Project/src/DimooModel.cpp)**: 去除 `drawButterfly3D` 的 `static` 限制，修改材质设置使其支持传入的 `alpha` 与 `r, g, b` 渐变色。
+2. **[DimooModel.cpp](file:///f:/Degree/Last%20Sem/TCG/Project/src/DimooModel.cpp)**: 
+   - 去除 `drawButterfly3D` 的 `static` 限制，修改材质设置使其支持传入的 `alpha` 与 `r, g, b` 渐变色；
+   - 重新配置 `drawVineRing` 的 Y 轴旋转，应用发射自转与精准归位；
+   - 将藤蔓环的渲染相对位置往后偏移 `-0.15f`。
 3. **[Game.h](file:///f:/Degree/Last%20Sem/TCG/Project/src/Game.h)**: 声明弹体结构体 `Projectile` 和 `dimooProjectiles` 容器，以及辅助函数。
 4. **[Game.cpp](file:///f:/Degree/Last%20Sem/TCG/Project/src/Game.cpp)**: 
    - 修复重力失效 Bug，并提升起跳速度；
@@ -29,11 +35,13 @@
 
 ---
 
-### 任务 1：导出并增强 3D 蝴蝶渲染函数 (DimooModel)
+### 任务 1：导出 3D 蝴蝶函数与重构藤蔓环定位和归位自转 (DimooModel)
 
 **文件：**
 - 修改：`Project/src/DimooModel.h:37-49`
-- 修改：`Project/src/DimooModel.cpp:443-480`
+- 修改：`Project/src/DimooModel.cpp:443-480` (drawButterfly3D)
+- 修改：`Project/src/DimooModel.cpp:685-703` (drawVineRing 旋转)
+- 修改：`Project/src/DimooModel.cpp:944-949` (draw 渲染藤蔓环偏移)
 
 - [ ] **步骤 1：在 `DimooModel.h` 中导出 `drawButterfly3D` 函数**
   修改 `DimooModel.h`，在 `DimooModel` 命名空间中加入 `drawButterfly3D` 声明，参数包含可选的 `alpha` 及自定义 RGB 颜色。
@@ -86,14 +94,49 @@
   }
   ```
 
-- [ ] **步骤 3：编译验证**
+- [ ] **步骤 3：在 `drawVineRing` 中应用精准自转与归位计算，平时静止**
+  定位到 `drawVineRing` 函数（约第 685 行），删除原有的 `float rotationY = t * 10.0f` 慢速自转，重构为根据 `ultPulse` 与 `skillPulse` 执行从 0 开始自转到对应整数圈（720° 与 1080°），最终随 pulse 归 0 而完全静止归位：
+  ```cpp
+  static void drawVineRing(const DimooVisualState& state, float t) {
+      glPushMatrix();
+
+      // 自定义自转：平时静止（0.0f），放技能自转2圈（720°），大招自转3圈（1080°）
+      // 当 pulse 归 0 时，角度完美退回 0° 归位，不在半路停在奇怪的方向
+      float rotationY = 0.0f;
+      if (state.ultPulse > 0.0f) {
+          float p = (1.5f - state.ultPulse) / 1.5f;
+          rotationY = p * 1080.0f;
+      } else if (state.skillPulse > 0.0f) {
+          float p = (1.2f - state.skillPulse) / 1.2f;
+          rotationY = p * 720.0f;
+      }
+
+      // 2. Apply drag tilt (stationary relative to the body)
+      float drag = state.moveBlend * 8.0f;
+      glRotatef(-drag, 0.0f, 0.0f, 1.0f);
+
+      // 1. Apply spin rotation
+      glRotatef(rotationY, 0.0f, 1.0f, 0.0f);
+  ```
+
+- [ ] **步骤 4：将藤蔓环渲染位置往后偏移，平时靠后**
+  修改 `DimooModel.cpp` 中 `draw` 方法（约第 945 行），将藤蔓环节点的偏移从 `glTranslatef(0.0f, 0.01f, 0.0f)` 改为向后偏移 `Z = -0.15f`：
+  ```cpp
+      // 3. 渲染藤蔓环节点 (Child of Body)
+      glPushMatrix();
+      glTranslatef(0.0f, 0.01f, -0.15f); // 相对身体中心微调，往后偏移 Z 轴，平时完全在身体后面
+      drawVineRing(state, t);
+      glPopMatrix();
+  ```
+
+- [ ] **步骤 5：编译验证**
   运行：`mingw32-make -f DimooVsHirona.cbp.mak debug`
   预期：编译无报错，生成 `FightingGameDebug.exe`。
 
-- [ ] **步骤 4：Commit**
+- [ ] **步骤 6：Commit**
   ```bash
   git add Project/src/DimooModel.h Project/src/DimooModel.cpp
-  git commit -m "feat: export drawButterfly3D with alpha and RGB custom styling"
+  git commit -m "feat: offset vine ring backward and implement precise spin-and-return rotation"
   ```
 
 ---
@@ -321,10 +364,7 @@
   ```
 
 - [ ] **步骤 2：同步更新 `updateDimooVisuals` 中的定时蝴蝶粒子配色**
-  在 `updateDimooVisuals` 中（约 370-398 行），由于该函数在玩家移动/大招中会自动定时喷发少量尾焰蝴蝶，我们需要将这里产生的蝴蝶按动作配色：
-  - 大招状态：使用淡紫色 `(0.78f, 0.60f, 0.98f)`。
-  - 二技能状态：使用青蓝色 `(0.40f, 0.85f, 0.98f)`。
-  - 移动状态：使用浪漫粉色 `(0.98f, 0.68f, 0.82f)`。
+  在 `updateDimooVisuals` 中（约 370-398 行），将产生的小蝴蝶按状态配色。
   ```cpp
   // 修改 Game::updateDimooVisuals 后半部分
   float ultLift = 0.23f * clamp(dimooUltPulse, 0.0f, 1.2f);
@@ -440,8 +480,9 @@
    - 运行 `mingw32-make -f DimooVsHirona.cbp.mak debug` 确保代码可正确编译出 `FightingGameDebug.exe`。
 2. **战斗状态验证**：
    - 运行对战程序 `.\FightingGame.exe`（或 `.\FightingGameDebug.exe`）。
-   - 按键盘进行跳跃测试，观察跳跃高度是否增加（是否能明显跳起闪避地面攻击）。
+   - 按键盘进行跳跃测试，观察跳跃高度是否增加，且确认现在**小野（W键）与 Dimoo（方向键上 或 I键）可以正常跳跃腾空**。
    - **普通攻击测试**：按下平A键，检查是否有 4 只粉色 3D 蝴蝶爆出，并检查近距离命中是否判定成功。
    - **二技能（远程弹射）测试**：按下二技能键，检查是否有一只较大尺寸的青蓝色 3D 梦蝶从手中飞出，且飞行时有振翅和正弦曲线的灵动起伏。检查当梦蝶飞向远处的 Hirono 并接触时，是否爆散出 14 只青蓝色小蝴蝶、触发相机震动和 16 点伤害。
+   - **藤蔓环旋转与归位测试**：平时藤蔓环静止在 Dimoo 的 Z 轴后侧。施放二技能或大招时，藤蔓环快速自转（2圈/3圈），当动作结束（`pulse` 归 0）时，检查藤蔓环是否平滑停留在初始的后侧位置，没有发生偏角错位。
    - **二技能闪避测试**：在敌方射来青蓝梦蝶时，精确按下跳跃键，查看当角色处于空中时，蝴蝶弹体是否能从脚底平滑滑过，完全不产生伤害或受击表现。
    - **大招（梦境狂澜）测试**：按下大招键，检查空中施法后，是否产生了横向大判定，且伴随全屏梦境泛白，并有 40 只淡紫色 3D 梦蝶如同狂澜般高速飞向前方的对手，造成 30 点伤害。
