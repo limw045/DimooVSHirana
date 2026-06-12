@@ -392,7 +392,8 @@ void Game::updateDimooVisuals(float dt) {
         nextDelay = 0.16f;
     }
 
-    spawnDimooButterflies(dimooX, dimooY + 0.55f, dimooZ, count, spread, burst);
+    float ultLift = 0.23f * clamp(dimooUltPulse, 0.0f, 1.2f);
+    spawnDimooButterflies(dimooX, dimooY + ultLift + 0.55f, dimooZ, count, spread, burst);
     dimooButterflyTimer = nextDelay;
 }
 
@@ -565,7 +566,8 @@ void Game::performDimooAttack(int attackLevel) {
         dimooUltPulse = 1.5f;
         dimooSkillPulse = 1.35f;
         dimooAttackPulse = 0.8f;
-        spawnDimooButterflies(dimooX, dimooY + 0.72f, dimooZ, 25, 0.88f, true);
+        float ultLift = 0.23f * clamp(dimooUltPulse, 0.0f, 1.2f);
+        spawnDimooButterflies(dimooX, dimooY + ultLift + 0.55f, dimooZ, 25, 0.88f, true);
         if (std::abs(dimooX - hironoX) < 3.0f && std::abs(dimooY - hironoY) < 2.0f) {
             hironoHp -= 30.0f;
             spawnHitSparks(hironoX, hironoY + 0.5f, 0.0f, 40, 0.9f, 0.95f, 1.0f);
