@@ -873,9 +873,10 @@ void Game::draw() {
             glPushMatrix();
             glTranslatef(p.x, p.y, p.z);
             
-            // 计算飞行朝向
-            float angleY = atan2(p.vx, p.vz) * 180.0f / (float)M_PI;
-            glRotatef(angleY, 0.0f, 1.0f, 0.0f);
+            // 计算飞行朝向 (在 X-Y 面内飞舞，绕 Z 轴旋转使头部对准运动方向)
+            float angleZ = atan2(p.vy, p.vx) * 180.0f / (float)M_PI;
+            glRotatef(angleZ - 90.0f, 0.0f, 0.0f, 1.0f);
+            glRotatef(18.0f, 0.0f, 1.0f, 0.0f); // 侧倾 18 度以展现 3D 振翅的纵深感
             
             // 计算双翼振动频率
             float wingFlap = 30.0f + 40.0f * sin(p.phase);
@@ -890,9 +891,10 @@ void Game::draw() {
     for (const auto& proj : dimooProjectiles) {
         glPushMatrix();
         glTranslatef(proj.x, proj.y, proj.z);
-        if (!proj.facingRight) {
-            glScalef(-1.0f, 1.0f, 1.0f);
-        }
+        // 根据弹体飞行速度动态计算偏角，不仅可省去镜像 scale 判定，还能在波动飞行时呈现自然的点头动画
+        float angleZ = atan2(proj.vy, proj.vx) * 180.0f / (float)M_PI;
+        glRotatef(angleZ - 90.0f, 0.0f, 0.0f, 1.0f);
+        glRotatef(18.0f, 0.0f, 1.0f, 0.0f); // 侧倾 18 度以展现 3D 振翅的纵深感
         float wingAngle = 30.0f + 45.0f * sin(proj.phase * 2.2f);
         DimooModel::drawButterfly3D(wingAngle, proj.size * 2.25f, true, 1.0f, proj.r, proj.g, proj.b);
         glPopMatrix();
