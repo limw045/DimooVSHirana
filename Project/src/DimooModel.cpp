@@ -440,22 +440,22 @@ static void drawButterflyWingPlate(float sx, float sy, float thickness) {
     glEnd();
 }
 
-static void drawButterfly3D(float wingAngle, float scale, bool glow) {
+void drawButterfly3D(float wingAngle, float scale, bool glow, float alpha, float r, float g, float b) {
     glPushMatrix();
     glScalef(scale, scale, scale);
 
-    GLfloat bodyAmbient[]  = {0.14f, 0.16f, 0.12f, 1.0f};
-    GLfloat bodyDiffuse[]  = {0.24f, 0.28f, 0.20f, 1.0f};
-    GLfloat bodySpecular[] = {0.12f, 0.14f, 0.10f, 1.0f};
+    GLfloat bodyAmbient[]  = {0.14f * alpha, 0.16f * alpha, 0.12f * alpha, alpha};
+    GLfloat bodyDiffuse[]  = {0.24f * alpha, 0.28f * alpha, 0.20f * alpha, alpha};
+    GLfloat bodySpecular[] = {0.12f * alpha, 0.14f * alpha, 0.10f * alpha, alpha};
     setMaterial(bodyAmbient, bodyDiffuse, bodySpecular, 18.0f);
     drawCapsuleBetween(Vec3(0.0f, -0.04f, 0.0f), Vec3(0.0f, 0.07f, 0.0f), 0.011f, 8);
 
-    GLfloat wingAmbient[]  = {0.60f, 0.72f, 0.58f, 1.0f};
-    GLfloat wingDiffuse[]  = {0.82f, 0.94f, 0.78f, 1.0f};
-    GLfloat wingSpecular[] = {0.18f, 0.22f, 0.16f, 1.0f};
+    GLfloat wingAmbient[]  = {r * 0.73f, g * 0.76f, b * 0.74f, alpha};
+    GLfloat wingDiffuse[]  = {r, g, b, alpha};
+    GLfloat wingSpecular[] = {0.18f, 0.22f, 0.16f, alpha};
     if (glow) {
-        wingAmbient[0] = 0.76f; wingAmbient[1] = 0.88f; wingAmbient[2] = 0.78f;
-        wingDiffuse[0] = 0.94f; wingDiffuse[1] = 1.00f; wingDiffuse[2] = 0.90f;
+        wingAmbient[0] = r * 0.90f; wingAmbient[1] = g * 0.92f; wingAmbient[2] = b * 0.90f;
+        wingDiffuse[0] = saturate(r + 0.12f); wingDiffuse[1] = saturate(g + 0.06f); wingDiffuse[2] = saturate(b + 0.12f);
     }
     setMaterial(wingAmbient, wingDiffuse, wingSpecular, 24.0f);
 
@@ -686,12 +686,13 @@ static void drawVineRing(const DimooVisualState& state, float t) {
     glPushMatrix();
 
     // 自转与倾斜
-    float rotationY = t * 10.0f;
-    if (state.ultPulse > 0.01f) {
-        rotationY += state.ultPulse * 720.0f;
-    }
-    if (state.skillPulse > 0.01f) {
-        rotationY += state.skillPulse * 360.0f;
+    float rotationY = 0.0f;
+    if (state.ultPulse > 0.0f) {
+        float p = (1.5f - state.ultPulse) / 1.5f;
+        rotationY = p * 1080.0f;
+    } else if (state.skillPulse > 0.0f) {
+        float p = (1.2f - state.skillPulse) / 1.2f;
+        rotationY = p * 720.0f;
     }
 
     // 2. Apply drag tilt (stationary relative to the body)
@@ -943,7 +944,7 @@ void draw(const DimooVisualState& state) {
 
     // 3. 渲染藤蔓环节点 (Child of Body)
     glPushMatrix();
-    glTranslatef(0.0f, 0.01f, 0.0f); // 相对身体中心微调
+    glTranslatef(0.0f, 0.01f, -0.15f); // 相对身体中心微调
     drawVineRing(state, t);
     glPopMatrix();
 

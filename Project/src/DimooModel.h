@@ -37,6 +37,7 @@ struct DimooVisualState {
 };
 
 void draw(const DimooVisualState& state);
+void drawButterfly3D(float wingAngle, float scale, bool glow, float alpha = 1.0f, float r = 0.82f, float g = 0.94f, float b = 0.78f);
 void setFaceTextureTuning(float uOffset, float vOffset, float uScale, float vScale);
 void resetFaceTextureTuning();
 void setHairAngleTuning(float frontTilt, float topTilt, float sideSpread);
