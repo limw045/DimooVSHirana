@@ -12,7 +12,7 @@ LD = g++.exe
 WINDRES = windres.exe
 
 INC = -Isrc -Isrc\\scene -I. -Iimgui-1.92.8 -Iimgui-1.92.8\\backends
-CFLAGS = -Wall -fexceptions
+CFLAGS = -Wall -fexceptions -std=gnu++11
 RESINC = 
 LIBDIR = 
 LIB = 

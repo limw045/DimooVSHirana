@@ -25,6 +25,7 @@
 #endif
 
 #ifdef _WIN32
+extern "C" void _fpreset(void);
 static ULONG_PTR gArenaGdiToken;
 static bool gArenaGdiInitialized = false;
 

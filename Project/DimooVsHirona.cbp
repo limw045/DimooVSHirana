@@ -15,6 +15,7 @@
                 <Option execution_dir="." />
                 <Compiler>
                     <Add option="-g" />
+                    <Add option="-std=gnu++11" />
                 </Compiler>
                 <Linker>
                     <Add option="C:/MinGW/lib/libopengl32.a" />
@@ -33,6 +34,7 @@
                 <Option execution_dir="." />
                 <Compiler>
                     <Add option="-O2" />
+                    <Add option="-std=gnu++11" />
                 </Compiler>
                 <Linker>
                     <Add option="-s" />
@@ -52,6 +54,7 @@
                 <Option execution_dir="." />
                 <Compiler>
                     <Add option="-g" />
+                    <Add option="-std=gnu++11" />
                 </Compiler>
                 <Linker>
                     <Add option="C:/MinGW/lib/libopengl32.a" />
@@ -70,6 +73,7 @@
                 <Option execution_dir="." />
                 <Compiler>
                     <Add option="-O2" />
+                    <Add option="-std=gnu++11" />
                 </Compiler>
                 <Linker>
                     <Add option="-s" />
@@ -83,6 +87,7 @@
             </Target>
         </Build>
         <Compiler>
+            <Add option="-std=gnu++11" />
             <Add option="-Wall" />
             <Add option="-fexceptions" />
             <Add directory="src" />
