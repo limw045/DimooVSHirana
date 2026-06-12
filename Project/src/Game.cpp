@@ -109,6 +109,7 @@ void Game::init() {
     dimooButterflyTimer = 0.0f;
 
     particles.clear();
+    dimooProjectiles.clear();
 
     arena.init();
     camera.init();
@@ -467,6 +468,7 @@ void Game::handleBattleMovement(float dt) {
     if (matchOver) return;
 
     const float moveSpeed = 4.5f;
+    const float jumpImpulse = 6.8f;
     float hironoDir = 0.0f;
     float dimooDir = 0.0f;
 
@@ -479,11 +481,11 @@ void Game::handleBattleMovement(float dt) {
     dimooX += dimooDir * moveSpeed * dt;
 
     if (input.hirono_upQueued && hironoY <= 0.001f) {
-        hironoVy = 6.8f;
+        hironoVy = jumpImpulse;
     }
 
     if (input.dimoo_upQueued && dimooY <= 0.121f) {
-        dimooVy = 6.8f;
+        dimooVy = jumpImpulse;
     }
 
     input.hirono_upQueued = false;
