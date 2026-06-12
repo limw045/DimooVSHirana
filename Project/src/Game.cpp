@@ -880,13 +880,13 @@ void Game::draw() {
             // 计算双翼振动频率
             float wingFlap = 30.0f + 40.0f * sin(p.phase);
             
-            // 渲染 3D 振翅蝴蝶
-            DimooModel::drawButterfly3D(wingFlap, p.size * 0.016f, true, p.a, p.r, p.g, p.b);
+            // 渲染 3D 振翅蝴蝶 (放大以提升画面可见度)
+            DimooModel::drawButterfly3D(wingFlap, p.size * 0.064f, true, p.a, p.r, p.g, p.b);
             glPopMatrix();
         }
     }
 
-    // 3. 渲染二技能远程蝴蝶弹体 (同样使用 3D 梦蝶模型)
+    // 3. 渲染二技能远程蝴蝶弹体 (同样使用 3D 梦蝶模型，放大提升画面可见度)
     for (const auto& proj : dimooProjectiles) {
         glPushMatrix();
         glTranslatef(proj.x, proj.y, proj.z);
@@ -894,7 +894,7 @@ void Game::draw() {
             glScalef(-1.0f, 1.0f, 1.0f);
         }
         float wingAngle = 30.0f + 45.0f * sin(proj.phase * 2.2f);
-        DimooModel::drawButterfly3D(wingAngle, proj.size * 0.16f, true, 1.0f, proj.r, proj.g, proj.b);
+        DimooModel::drawButterfly3D(wingAngle, proj.size * 0.45f, true, 1.0f, proj.r, proj.g, proj.b);
         glPopMatrix();
     }
 
