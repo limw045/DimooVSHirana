@@ -2,13 +2,15 @@
 
 > **面向 AI 代理的工作者：** 必需子技能：使用 superpowers:subagent-driven-development（推荐）或 superpowers:executing-plans 逐任务实现此计划。步骤使用复选框（`- [ ]`）语法来跟踪进度。
 
-**目标：** 重构 Dimoo 粒子系统，使蝴蝶粒子升级为 3D 骨骼振翅模型；将二技能重构为可跳跃闪避的远程梦蝶弹体攻击；将大招横向攻击范围扩大至 `8.0f` 并喷射铺天盖地的蝴蝶狂澜；将两名角色的跳跃速度提升至 `6.8f`，确保可通过跳跃精确闪避蝴蝶弹体和普攻。
+**目标：** 重构 Dimoo 粒子系统，使蝴蝶粒子升级为 3D 骨骼振翅模型；将二技能重构为可跳跃闪避的远程梦蝶弹体攻击；将大招横向攻击范围扩大至 `8.0f` 并喷射铺天盖地的蝴蝶狂澜；修复重力更新 Bug 并将起跳速度提升至 `6.8f`，确保玩家可以通过跳跃精确闪避蝴蝶弹体和普攻。
 
 **架构：**
 1. **DimooModel 接口化**：将 `drawButterfly3D` 从 `static` 改为全局导出，新增 `alpha` 及 `r, g, b` 材质渐变和色彩参数。
 2. **弹体系统实现**：在 `Game` 类中增加弹体 vector 容器。在二技能施放时实例化弹体。每一帧在 `Game::update` 中更新其坐标（包含 X 轴平移与 Y 轴正弦飞舞），并检测与对手的 3D 距离，命中后触发伤害与爆炸特效。
 3. **粒子 3D 化与配色**：在 `Game::draw` 渲染粒子时，将 `PARTICLE_BUTTERFLY` 渲染替换为 `drawButterfly3D`，由速度决定其 Yaw 朝向，由生命周期决定淡出与扇翅，并根据平A（粉色）、二技能（青蓝色）、大招（淡紫色）应用三种不同的色彩。
-4. **跳跃高度提升与 Y 轴碰撞**：在 `Game::handleBattleMovement` 中将起跳初速度从 `5.5f` 提升至 `6.8f`，同时对所有近战和远程判定进行严格的 Y 轴高度差计算，确保跳跃可以闪避。
+4. **跳跃失效修复与高度提升**：
+   - 修复重力更新时的 Y 轴卡死 Bug（即起跳瞬间高度仍为地表，重力逻辑不执行导致无法升空）。
+   - 将起跳初速度从 `5.5f` 提升至 `6.8f`，所有近战和远程判定进行严格的 Y 轴高度差计算，确保跳跃可以闪避。
 
 **技术栈：** C++, OpenGL, GLUT
 
@@ -20,7 +22,7 @@
 2. **[DimooModel.cpp](file:///f:/Degree/Last%20Sem/TCG/Project/src/DimooModel.cpp)**: 去除 `drawButterfly3D` 的 `static` 限制，修改材质设置使其支持传入的 `alpha` 与 `r, g, b` 渐变色。
 3. **[Game.h](file:///f:/Degree/Last%20Sem/TCG/Project/src/Game.h)**: 声明弹体结构体 `Projectile` 和 `dimooProjectiles` 容器，以及辅助函数。
 4. **[Game.cpp](file:///f:/Degree/Last%20Sem/TCG/Project/src/Game.cpp)**: 
-   - 提升起跳速度；
+   - 修复重力失效 Bug，并提升起跳速度；
    - 更新弹体物理运动、生命周期及 3D 距离碰撞检测（包括 Y 轴高度差）；
    - 在二技能、大招触发时分别执行发射弹体与狂澜喷射逻辑；
    - 在绘制粒子和弹体时，调用 3D 蝴蝶绘制函数并设定对应的颜色、Yaw 旋转角和翅膀扇动相位。
@@ -34,7 +36,7 @@
 - 修改：`Project/src/DimooModel.cpp:443-480`
 
 - [ ] **步骤 1：在 `DimooModel.h` 中导出 `drawButterfly3D` 函数**
-  修改 `DimooModel.h`，在 `DimooModel` 命名空间中加入 `drawButterfly3D` 声明，参数包含可选的 `alpha` 及自定义 RGB 颜色（默认值为原本的淡绿配色）。
+  修改 `DimooModel.h`，在 `DimooModel` 命名空间中加入 `drawButterfly3D` 声明，参数包含可选的 `alpha` 及自定义 RGB 颜色。
   ```cpp
   // 修改 DimooModel.h 约第 39 行
   void draw(const DimooVisualState& state);
@@ -42,7 +44,7 @@
   ```
 
 - [ ] **步骤 2：在 `DimooModel.cpp` 中去除 static 并支持 alpha 材质淡出与自定义 RGB**
-  定位到 `DimooModel.cpp` 中的 `drawButterfly3D`，去除前面的 `static`，并在函数声明及材质配置中增加对应参数，使其能够支持动态的 alpha 透明度渲染与颜色传递。
+  修改 `DimooModel.cpp` 中的 `drawButterfly3D`，去除前面的 `static`，并在材质配置中增加对应参数，使其能够支持动态的 alpha 透明度渲染与颜色传递。
   ```cpp
   // 修改 DimooModel.cpp 中的 drawButterfly3D 函数
   void drawButterfly3D(float wingAngle, float scale, bool glow, float alpha, float r, float g, float b) {
@@ -96,10 +98,11 @@
 
 ---
 
-### 任务 2：实现远程弹体数据结构与初速提升 (Game)
+### 任务 2：实现远程弹体数据结构与重力/起跳修复增强 (Game)
 
 **文件：**
 - 修改：`Project/src/Game.h:75-84`
+- 修改：`Project/src/Game.cpp:258-285` (重力更新块)
 - 修改：`Project/src/Game.cpp:480-492` (handleBattleMovement)
 
 - [ ] **步骤 1：在 `Game.h` 中定义 Projectile 结构体和容器**
@@ -119,7 +122,33 @@
   std::vector<Projectile> dimooProjectiles;
   ```
 
-- [ ] **步骤 2：提升双方起跳速度为 6.8f**
+- [ ] **步骤 2：修复重力更新时的起跳条件 Bug**
+  修改 `Game.cpp` 中的 `Game::update` 重力更新段（约 263 行和 275 行），使起跳瞬间（即使高度等于地面但 `Vy > 0`）也执行位移与重力更新。
+  ```cpp
+  // 修改 Game.cpp 约 263 行
+  if (hironoY > 0.0f || hironoVy > 0.0f) {
+      hironoVy -= GRAVITY * dt;
+      hironoY += hironoVy * dt;
+      if (hironoY <= 0.0f) {
+          hironoY = 0.0f;
+          hironoVy = 0.0f;
+          spawnDust(hironoX, 0.005f, 0.0f, 8); // 落地扬尘
+      }
+  }
+
+  // 修改 Game.cpp 约 275 行
+  if (dimooY > DIMOO_REST_Y || dimooVy > 0.0f) {
+      dimooVy -= GRAVITY * dt;
+      dimooY += dimooVy * dt;
+      if (dimooY <= DIMOO_REST_Y) {
+          dimooY = DIMOO_REST_Y;
+          dimooVy = 0.0f;
+          spawnDust(dimooX, 0.005f, 0.0f, 8); // 落地扬尘
+      }
+  }
+  ```
+
+- [ ] **步骤 3：提升双方起跳速度为 6.8f**
   修改 `Game.cpp` 中 `handleBattleMovement` 方法（约第 481-487 行），将 Hirono 与 Dimoo 的起跳垂直初速度修改为 `6.8f`。
   ```cpp
   // 修改 Game.cpp
@@ -131,14 +160,14 @@
   }
   ```
 
-- [ ] **步骤 3：编译验证**
+- [ ] **步骤 4：编译验证**
   运行：`mingw32-make -f DimooVsHirona.cbp.mak debug`
   预期：成功通过编译。
 
-- [ ] **步骤 4：Commit**
+- [ ] **步骤 5：Commit**
   ```bash
   git add Project/src/Game.h Project/src/Game.cpp
-  git commit -m "feat: add Projectile container and boost character jump velocity to 6.8f"
+  git commit -m "fix: resolve jump lockout bug by checking vertical speed and increase jump impulse"
   ```
 
 ---
