@@ -601,6 +601,15 @@ static void drawHeadAndFace(const DimooVisualState& state, float t, float moveLe
 
     drawFaceFeatures(state);
     drawHairClusters(state, t, moveLean);
+
+    // Draw perched butterfly relative to head center (since Y = 0.80 - 0.45 = 0.35)
+    float perchWing = 12.0f + 8.0f * sin(t * 4.0f);
+    glPushMatrix();
+    float butterflyFloat = sin(t * 2.0f) * 0.010f;
+    glTranslatef(0.17f, 0.35f + butterflyFloat, 0.23f);
+    glRotatef(12.0f * sin(t * 2.0f), 0.0f, 1.0f, 0.0f);
+    drawButterfly3D(perchWing, 0.78f, false);
+    glPopMatrix();
 }
 
 static void drawMascotBody(const DimooVisualState& state, float t) {
@@ -641,7 +650,7 @@ static void drawVineRing(const DimooVisualState& state, float t) {
                       + cos(angle * 6.0f + t * 0.8f) * 0.03f
                       - cos(angle) * drag;
         float x = cos(angle) * radius;
-        float y = 0.01f + sin(angle) * radius * yScale;
+        float y = sin(angle) * radius * yScale;
         nodes.push_back(Vec3(x, y, zOffset));
     }
 
@@ -770,14 +779,6 @@ static void drawSkillAura(float skillPulse, float t) {
 }
 
 static void drawButterflySystem(const DimooVisualState& state, float t) {
-    float bodyFloat = sin(t * 2.0f) * 0.010f;
-    float perchWing = 12.0f + 8.0f * sin(t * 4.0f);
-    glPushMatrix();
-    glTranslatef(0.17f, 0.80f + bodyFloat, 0.23f);
-    glRotatef(12.0f * sin(t * 2.0f), 0.0f, 1.0f, 0.0f);
-    drawButterfly3D(perchWing, 0.78f, false);
-    glPopMatrix();
-
     if (state.attackPulse > 0.02f) {
         glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
         glDisable(GL_LIGHTING);
