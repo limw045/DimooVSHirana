@@ -683,21 +683,36 @@ static void drawMascotBody(const DimooVisualState& state, float t) {
 }
 
 static void drawVineRing(const DimooVisualState& state, float t) {
+    glPushMatrix();
+
+    // 自转与倾斜
+    float rotationY = t * 10.0f;
+    if (state.ultPulse > 0.01f) {
+        rotationY += state.ultPulse * 720.0f;
+    }
+    glRotatef(rotationY, 0.0f, 1.0f, 0.0f);
+
+    float drag = state.moveBlend * 8.0f;
+    glRotatef(-drag, 0.0f, 0.0f, 1.0f);
+
     const int nodeCount = 24;
     std::vector<Vec3> nodes;
     nodes.reserve(nodeCount);
 
-    float drag = state.moveBlend * 0.06f;
+    float nodeDrag = state.moveBlend * 0.06f;
     for (int i = 0; i < nodeCount; ++i) {
         float angle = 2.0f * (float)M_PI * (float)i / (float)nodeCount;
         float radiusNoise = sin(angle * 3.2f + 0.8f) * 0.07f
                           + cos(angle * 5.4f + 1.3f) * 0.045f
                           + sin(t * 0.9f + i * 0.6f) * 0.010f;
         float radius = 0.63f + radiusNoise;
+        if (state.ultPulse > 0.01f) {
+            radius += state.ultPulse * 0.08f * sin(t * 12.0f + i * 0.8f);
+        }
         float yScale = 1.00f + 0.12f * sin(angle * 2.0f + 0.5f);
         float zOffset = sin(angle * 3.5f + 0.2f) * 0.11f
                       + cos(angle * 6.0f + t * 0.8f) * 0.03f
-                      - cos(angle) * drag;
+                      - cos(angle) * nodeDrag;
         float x = cos(angle) * radius;
         float y = sin(angle) * radius * yScale;
         nodes.push_back(Vec3(x, y, zOffset));
@@ -751,19 +766,25 @@ static void drawVineRing(const DimooVisualState& state, float t) {
         }
     }
 
-    if (state.skillPulse > 0.01f) {
+    float glowIntensity = state.skillPulse;
+    if (state.ultPulse > glowIntensity) {
+        glowIntensity = state.ultPulse;
+    }
+    if (glowIntensity > 0.01f) {
         glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
         glDisable(GL_LIGHTING);
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE);
         glBegin(GL_LINE_LOOP);
         for (int i = 0; i < nodeCount; ++i) {
-            glColor4f(0.70f, 0.96f, 0.78f, 0.10f + state.skillPulse * 0.14f);
+            glColor4f(0.70f, 0.96f, 0.78f, 0.10f + glowIntensity * 0.14f);
             glVertex3f(nodes[i].x * 1.03f, nodes[i].y * 1.02f, nodes[i].z);
         }
         glEnd();
         glPopAttrib();
     }
+
+    glPopMatrix();
 }
 
 static void drawDreamParticleSwarm(const DimooVisualState& state, float t) {
