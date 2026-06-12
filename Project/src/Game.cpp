@@ -222,6 +222,35 @@ void Game::update(float dt) {
         }
     }
 
+    // 更新 Dimoo 弹体物理与碰撞
+    for (auto it = dimooProjectiles.begin(); it != dimooProjectiles.end(); ) {
+        it->phase += dt * 12.0f;
+        it->x += it->vx * dt;
+        it->y += (it->vy + sin(it->phase * 1.5f) * 0.06f) * dt;
+        it->z += it->vz * dt;
+        it->life -= dt;
+
+        float dx = it->x - hironoX;
+        float dy = it->y - (hironoY + 0.5f);
+        float dz = it->z - hironoZ;
+        float dist = sqrt(dx * dx + dy * dy + dz * dz);
+
+        bool hit = false;
+        if (dist < 0.82f) {
+            hironoHp -= 16.0f;
+            spawnHitSparks(it->x, it->y, it->z, 15, 0.40f, 0.85f, 0.98f);
+            spawnDimooButterflies(it->x, it->y, it->z, 14, 0.35f, true, 0.40f, 0.85f, 0.98f);
+            camera.applyShake(0.26f);
+            hit = true;
+        }
+
+        if (hit || std::abs(it->x) > 4.5f || it->life <= 0.0f) {
+            it = dimooProjectiles.erase(it);
+        } else {
+            ++it;
+        }
+    }
+
     switch (currentState) {
         case STATE_TITLE:
             camera.update(dt, 0.0f, 0.0f, 0.0f, 0.0f, false);
@@ -399,8 +428,17 @@ void Game::updateDimooVisuals(float dt) {
         nextDelay = 0.16f;
     }
 
+    float pr = 0.82f, pg = 0.94f, pb = 0.78f; // 默认环境浅绿
+    if (dimooUltPulse > 0.18f) {
+        pr = 0.78f; pg = 0.60f; pb = 0.98f;
+    } else if (dimooSkillPulse > 0.18f) {
+        pr = 0.40f; pg = 0.85f; pb = 0.98f;
+    } else if (dimooMoveBlend > 0.25f) {
+        pr = 0.98f; pg = 0.68f; pb = 0.82f;
+    }
+
     float ultLift = 0.23f * clamp(dimooUltPulse, 0.0f, 1.2f);
-    spawnDimooButterflies(dimooX, dimooY + ultLift + 0.55f, dimooZ, count, spread, burst);
+    spawnDimooButterflies(dimooX, dimooY + ultLift + 0.55f, dimooZ, count, spread, burst, pr, pg, pb);
     dimooButterflyTimer = nextDelay;
 }
 
