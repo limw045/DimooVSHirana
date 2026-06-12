@@ -1,6 +1,6 @@
-# Dimoo 3D 蝴蝶粒子与远程二/三技能设计规格书 (Dimoo 3D Butterfly Particles & Ranged Attack Design Spec)
+# Dimoo 3D 蝴蝶粒子与远程二/三技能及跳跃增强设计规格书 (Dimoo 3D Butterfly Particles & Ranged Attack Design Spec)
 
-本文档记录了为 Dimoo 3D 模型设计的蝴蝶粒子 3D 化、二技能远程梦蝶弹射、大招（蝴蝶梦境）超宽屏判定与狂澜特效，以及跳跃机制增强的详细方案。
+本文档记录了为 Dimoo 3D 模型设计的蝴蝶粒子 3D 化、二技能远程梦蝶弹射、大招（蝴蝶梦境）超宽屏判定与狂澜特效，重力/跳跃机制修复增强，以及藤蔓环（树枝）定位与自转归位机制的详细方案。
 
 ---
 
@@ -80,30 +80,70 @@ std::vector<Projectile> dimooProjectiles;
 
 ---
 
-## 5. 跳跃机制与闪避判定增强 (Jumping & Dodging Mechanism)
+## 5. 重力与跳跃闪避机制修复与增强 (Jumping & Dodging Mechanism Fix)
 
-为了让玩家能够有效闪避上述远程攻击和判定，对游戏内的跳跃高度与伤害检测进行如下增强：
+### 5.1 跳跃失效 Bug 修复
+* **发现**：原先的重力更新代码逻辑为 `if (hironoY > 0.0f)` 和 `if (dimooY > DIMOO_REST_Y)`。当角色位于地面且被赋予上升速度 `Vy` 时，由于其 `Y` 坐标仍然等于地面高度，重力更新块不会执行，导致角色的 `Y` 坐标被锁死，无法起跳。
+* **修复方法**：将条件判断重构为：
+  - Hirono: `if (hironoY > 0.0f || hironoVy > 0.0f)`
+  - Dimoo: `if (dimooY > DIMOO_REST_Y || dimooVy > 0.0f)`
+  这能确保起跳瞬间（`Vy > 0.0f`）位置更新和重力逻辑能够被正确执行，角色可正常腾空。
 
-### 5.1 提升跳跃高度
+### 5.2 提升跳跃高度
 * **修改类**：`Game`
 * **逻辑**：将双方角色起跳时的初速度 `Vy` 从 `5.5f` 提升至 `6.8f`。
   - 这样，角色的最大跳跃高度将从约 `1.0f` 提高到约 `1.54f`，能更容易滞空躲避横向飞来的远程蝴蝶以及大招判定。
 
-### 5.2 精确 Y 轴碰撞判定
+### 5.3 精确 Y 轴碰撞判定
 * 所有近身和远程判定逻辑均加入严格的 Y 轴高度差计算，确保玩家在跳跃到半空时，能完全闪避地面上的普攻判定与飞来的蝴蝶弹体。
 
 ---
 
-## 6. 拟修改文件清单 (Proposed File Changes)
+## 6. 藤蔓环（树枝）定位与自转归位机制 (Vine Ring Placement & Return Rotation)
+
+为了使 Dimoo 身体周围的藤蔓环在平时保持在后方，并且在施放技能时能自转且最终精准回到预设角度，设计如下机制：
+
+### 6.1 平时靠后定位
+* **修改类**：`DimooModel`
+* **逻辑**：在 `DimooModel.cpp` 中将藤蔓环（Vine Ring）相对于 Body 中心的 Z 轴位置向后偏移 `-0.15f`。
+  ```cpp
+  glTranslatef(0.0f, 0.01f, -0.15f); // 相对身体中心微调，往后偏移 Z 轴，平时完全在身体后面
+  ```
+
+### 6.2 移除平时常态自转，改为静止
+* 移除 `drawVineRing` 中原有的 `float rotationY = t * 10.0f;` 常态时间自转，使其在平时保持静态。
+
+### 6.3 技能与大招自转并精准归位
+* **逻辑**：当施放技能和大招时，使用随 `ultPulse` 或 `skillPulse` 从起步到归零的插值计算自转角度，从而保证自转的方向是向前旋转，并且在动画结束时正好转满整圈，停留在 $0^\circ$ 的初始靠后位置（不会停在奇怪的夹角）：
+  - **二技能 (Skill)**：`skillPulse` 从 `1.2f` 归零。使用进度 `p = (1.2f - skillPulse) / 1.2f`，旋转角度为 `p * 720.0f`（自转 2 整圈）。
+  - **大招 (Ultimate)**：`ultPulse` 从 `1.5f` 归零。使用进度 `p = (1.5f - ultPulse) / 1.5f`，旋转角度为 `p * 1080.0f`（自转 3 整圈）。
+  - **公式**：
+    ```cpp
+    float rotationY = 0.0f;
+    if (state.ultPulse > 0.0f) {
+        float p = (1.5f - state.ultPulse) / 1.5f;
+        rotationY = p * 1080.0f;
+    } else if (state.skillPulse > 0.0f) {
+        float p = (1.2f - state.skillPulse) / 1.2f;
+        rotationY = p * 720.0f;
+    }
+    ```
+
+---
+
+## 7. 拟修改文件清单 (Proposed File Changes)
 
 - **[DimooModel.h](file:///f:/Degree/Last%20Sem/TCG/Project/src/DimooModel.h)**：
   - 导出 `drawButterfly3D` 并支持自定义颜色及透明度。
 - **[DimooModel.cpp](file:///f:/Degree/Last%20Sem/TCG/Project/src/DimooModel.cpp)**：
   - 将 `drawButterfly3D` 改为非静态，并接入 `alpha` 与自定义 RGB。
+  - 将藤蔓环位置修改为向后偏移 `-0.15f`，且平时静止。
+  - 在 `drawVineRing` 中应用归位自转插值公式。
 - **[Game.h](file:///f:/Degree/Last%20Sem/TCG/Project/src/Game.h)**：
   - 新增 `Projectile` 结构体及 `dimooProjectiles` 容器。
 - **[Game.cpp](file:///f:/Degree/Last%20Sem/TCG/Project/src/Game.cpp)**：
   - 将双方角色跳跃初速度提升至 `6.8f`。
+  - 修复重力条件判断，使跳跃生效。
   - 在 `update` 中实现远程弹体运动与碰撞检测。
   - 在 `performDimooAttack` 中重构二、三技能判定与特效。
   - 在 `draw` 中渲染所有弹体并使用 3D 蝴蝶绘制 `PARTICLE_BUTTERFLY` 粒子。
