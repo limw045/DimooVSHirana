@@ -544,41 +544,65 @@ void Game::performDimooAttack(int attackLevel) {
     if (attackLevel == 1) {
         dimooAttackPulse = 1.0f;
         spawnDimooButterflies(dimooX + (dimooFacingRight ? 0.22f : -0.22f), dimooY + 0.56f, 0.0f, 4, 0.26f, false);
+        for (size_t idx = particles.size() - 4; idx < particles.size(); ++idx) {
+            particles[idx].r = 0.98f; particles[idx].g = 0.68f; particles[idx].b = 0.82f;
+        }
         if (std::abs(dimooX - hironoX) < 1.1f && std::abs(dimooY - hironoY) < 1.0f) {
             hironoHp -= 8.0f;
-            spawnHitSparks(hironoX, hironoY + 0.5f, 0.0f, 15, 0.3f, 0.6f, 1.0f);
+            spawnHitSparks(hironoX, hironoY + 0.5f, 0.0f, 15, 0.98f, 0.68f, 0.82f);
             camera.applyShake(0.18f);
-            std::cout << "[Combat] Dimoo hit Hirono! Hirono HP: " << hironoHp << std::endl;
+            std::cout << "[Combat] Dimoo Melee hit Hirono! Hirono HP: " << hironoHp << std::endl;
         } else {
-            spawnHitSparks(dimooX + (dimooFacingRight ? 0.5f : -0.5f), dimooY + 0.5f, 0.0f, 3, 0.3f, 0.6f, 1.0f);
+            spawnHitSparks(dimooX + (dimooFacingRight ? 0.5f : -0.5f), dimooY + 0.5f, 0.0f, 3, 0.98f, 0.68f, 0.82f);
         }
     } else if (attackLevel == 2) {
         dimooSkillPulse = 1.2f;
         dimooAttackPulse = 0.6f;
-        spawnDimooButterflies(dimooX, dimooY + 0.62f, 0.0f, 14, 0.62f, true);
-        if (std::abs(dimooX - hironoX) < 2.0f && std::abs(dimooY - hironoY) < 1.2f) {
-            hironoHp -= 16.0f;
-            spawnHitSparks(hironoX, hironoY + 0.5f, 0.0f, 25, 0.2f, 0.9f, 0.9f);
-            camera.applyShake(0.26f);
-            std::cout << "[Combat] Dimoo Sleep ripple hit Hirono! Hirono HP: " << hironoHp << std::endl;
-        } else {
-            spawnHitSparks(dimooX + (dimooFacingRight ? 0.8f : -0.8f), dimooY + 0.5f, 0.0f, 5, 0.2f, 0.9f, 0.9f);
+        
+        Projectile proj;
+        proj.x = dimooX + (dimooFacingRight ? 0.35f : -0.35f);
+        proj.y = dimooY + 0.62f;
+        proj.z = dimooZ;
+        proj.vx = dimooFacingRight ? 4.2f : -4.2f;
+        proj.vy = 0.0f;
+        proj.vz = 0.0f;
+        proj.size = 1.5f;
+        proj.phase = 0.0f;
+        proj.life = proj.maxLife = 2.0f;
+        proj.facingRight = dimooFacingRight;
+        proj.r = 0.40f; proj.g = 0.85f; proj.b = 0.98f;
+        dimooProjectiles.push_back(proj);
+
+        spawnDimooButterflies(proj.x, proj.y, proj.z, 6, 0.25f, false);
+        for (size_t idx = particles.size() - 6; idx < particles.size(); ++idx) {
+            particles[idx].r = 0.40f; particles[idx].g = 0.85f; particles[idx].b = 0.98f;
         }
     } else if (attackLevel == 3) {
         dimooUltPulse = 1.5f;
         dimooSkillPulse = 1.35f;
         dimooAttackPulse = 0.8f;
         float ultLift = 0.23f * clamp(dimooUltPulse, 0.0f, 1.2f);
-        spawnDimooButterflies(dimooX, dimooY + ultLift + 0.55f, dimooZ, 25, 0.88f, true);
-        if (std::abs(dimooX - hironoX) < 3.0f && std::abs(dimooY - hironoY) < 2.0f) {
+        
+        if (std::abs(dimooX - hironoX) < 8.0f && std::abs(dimooY - hironoY) < 1.5f) {
             hironoHp -= 30.0f;
-            spawnHitSparks(hironoX, hironoY + 0.5f, 0.0f, 40, 0.9f, 0.95f, 1.0f);
+            spawnHitSparks(hironoX, hironoY + 0.5f, 0.0f, 40, 0.78f, 0.60f, 0.98f);
             camera.applyShake(0.55f);
             arena.triggerLidShake(60.0f);
-            std::cout << "[Combat] Dimoo ultimate hit Hirono! Hirono HP: " << hironoHp << std::endl;
+            std::cout << "[Combat] Dimoo Ultimate Torrent hit Hirono! Hirono HP: " << hironoHp << std::endl;
         } else {
             camera.applyShake(0.35f);
             arena.triggerLidShake(40.0f);
+        }
+        
+        float dir = (hironoX > dimooX) ? 1.0f : -1.0f;
+        spawnDimooButterflies(dimooX, dimooY + ultLift + 0.55f, dimooZ, 40, 0.88f, true);
+        size_t startIdx = particles.size() - 40;
+        for (size_t idx = startIdx; idx < particles.size(); ++idx) {
+            particles[idx].r = 0.78f; particles[idx].g = 0.60f; particles[idx].b = 0.98f;
+            particles[idx].vx = dir * (2.8f + (rand() % 100) / 100.0f * 1.5f);
+            particles[idx].vy = ((rand() % 100) / 100.0f - 0.25f) * 0.8f;
+            particles[idx].vz = ((rand() % 100) / 100.0f - 0.5f) * 0.6f;
+            particles[idx].maxLife = particles[idx].life = 0.8f + (rand() % 100) / 200.0f;
         }
         spawnDust(dimooX, 0.005f, 0.0f, 12);
     }
