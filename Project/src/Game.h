@@ -3,6 +3,7 @@
 
 #include "Common.hpp"
 #include "DimooModel.h"
+#include "HironoModel.h"
 #include "scene/Arena.h"
 #include "scene/Camera.h"
 #include "scene/Lighting.h"
@@ -82,6 +83,11 @@ public:
     float dimooUltPulse;
     float dimooButterflyTimer;
 
+    float hironoMoveBlend;
+    float hironoAttackPulse;
+    float hironoSkillPulse;
+    float hironoUltPulse;
+
     struct Projectile {
         float x, y, z;
         float vx, vy, vz;
@@ -100,6 +106,7 @@ public:
 private:
     void updateBattle(float dt);
     void updateDimooVisuals(float dt);
+    void updateHironoVisuals(float dt);
     void pollBattleInput();
     void handleBattleMovement(float dt);
     void handleBattleAttacks();
@@ -107,6 +114,7 @@ private:
     void performDimooAttack(int attackLevel);
     void spawnDimooButterflies(float x, float y, float z, int count, float spread, bool burst, float r = -1.0f, float g = -1.0f, float b = -1.0f);
     DimooModel::DimooVisualState buildDimooVisualState(float t) const;
+    HironoModel::HironoVisualState buildHironoVisualState(float t) const;
     void drawDebugOverlay();
     void drawHUD();
 };

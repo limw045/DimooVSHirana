@@ -2,6 +2,7 @@
 
 #include "CGImageLoader.hpp"
 #include "DimooModel.h"
+#include "HironoModel.h"
 #include "scene/Arena.h"
 
 #include "../imgui-1.92.8/imgui.h"
@@ -428,86 +429,6 @@ static void updateAnimation(float dt) {
     }
 }
 
-static void drawHironoPaper(float x, float y, float z, bool facingRight, float t, GLuint faceTex) {
-    glPushMatrix();
-    glTranslatef(x, y, z);
-    
-    if (!facingRight) {
-        glScalef(-1.0f, 1.0f, 1.0f);
-    }
-    
-    // 呼吸微缩放动画
-    float scaleY = 1.0f + sin(t * 4.0f) * 0.02f;
-    glScalef(1.0f, scaleY, 1.0f);
-    
-    // 1. 红色披风层 (Z = -0.02f)
-    glColor3f(0.72f, 0.08f, 0.08f);
-    glBegin(GL_QUADS);
-    glNormal3f(0.0f, 0.0f, 1.0f);
-    glVertex3f(-0.35f, 0.0f, -0.02f);
-    glVertex3f( 0.15f, 0.0f, -0.02f);
-    glVertex3f( 0.05f, 0.7f, -0.02f);
-    glVertex3f(-0.25f, 0.7f, -0.02f);
-    glEnd();
-    
-    // 2. 绿色外套身体层 (Z = 0.0f)
-    glColor3f(0.15f, 0.38f, 0.22f);
-    glBegin(GL_QUADS);
-    glNormal3f(0.0f, 0.0f, 1.0f);
-    glVertex3f(-0.2f, 0.0f, 0.0f);
-    glVertex3f( 0.2f, 0.0f, 0.0f);
-    glVertex3f( 0.15f, 0.5f, 0.0f);
-    glVertex3f(-0.15f, 0.5f, 0.0f);
-    glEnd();
-    
-    // 3. 脸部贴图层 (Z = 0.02f)
-    if (faceTex) {
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, faceTex);
-        glColor3f(1.0f, 1.0f, 1.0f);
-        glBegin(GL_QUADS);
-        glNormal3f(0.0f, 0.0f, 1.0f);
-        glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.3f, 0.45f, 0.02f);
-        glTexCoord2f(1.0f, 0.0f); glVertex3f( 0.3f, 0.45f, 0.02f);
-        glTexCoord2f(1.0f, 1.0f); glVertex3f( 0.3f, 1.05f, 0.02f);
-        glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.3f, 1.05f, 0.02f);
-        glEnd();
-        glDisable(GL_TEXTURE_2D);
-    } else {
-        glColor3f(0.98f, 0.88f, 0.82f);
-        glBegin(GL_QUADS);
-        glNormal3f(0.0f, 0.0f, 1.0f);
-        glVertex3f(-0.3f, 0.45f, 0.02f);
-        glVertex3f( 0.3f, 0.45f, 0.02f);
-        glVertex3f( 0.3f, 1.05f, 0.02f);
-        glVertex3f(-0.3f, 1.05f, 0.02f);
-        glEnd();
-    }
-    
-    // 橙黄色短发层 (Z = 0.03f)
-    glColor3f(0.95f, 0.72f, 0.08f);
-    glBegin(GL_QUADS);
-    glNormal3f(0.0f, 0.0f, 1.0f);
-    glVertex3f(-0.32f, 0.95f, 0.03f);
-    glVertex3f( 0.32f, 0.95f, 0.03f);
-    glVertex3f( 0.25f, 1.12f, 0.03f);
-    glVertex3f(-0.25f, 1.12f, 0.03f);
-    glEnd();
-    
-    // 4. 黄色围巾飘动层 (Z = 0.04f)
-    glColor3f(0.95f, 0.85f, 0.15f);
-    float scarfSway = sin(t * 5.0f) * 0.05f;
-    glBegin(GL_QUADS);
-    glNormal3f(0.0f, 0.0f, 1.0f);
-    glVertex3f(-0.10f, 0.50f, 0.04f);
-    glVertex3f( 0.10f, 0.50f, 0.04f);
-    glVertex3f( 0.25f + scarfSway, 0.25f, 0.04f);
-    glVertex3f( 0.05f + scarfSway, 0.25f, 0.04f);
-    glEnd();
-    
-    glPopMatrix();
-}
-
 static void drawScene() {
     glViewport(0, 0, gViewer.width, gViewer.height);
     glClearColor(gViewer.clearColor[0], gViewer.clearColor[1], gViewer.clearColor[2], 1.0f);
@@ -567,8 +488,21 @@ static void drawScene() {
             glTranslatef(0.0f, 0.12f, 0.0f);
             glScalef(gViewer.modelScale * 0.85f, gViewer.modelScale * 0.85f, gViewer.modelScale * 0.85f);
             
-            // 渲染小王子/小野
-            drawHironoPaper(0.0f, 0.0f, 0.0f, gViewer.visual.facingRight, gViewer.visual.time, gViewer.arena.hironoFaceTex);
+            // 渲染 3D 小王子/小野
+            HironoModel::HironoVisualState hVisual;
+            hVisual.x = 0.0f;
+            hVisual.y = 0.0f;
+            hVisual.z = 0.0f;
+            hVisual.facingRight = gViewer.visual.facingRight;
+            hVisual.time = gViewer.visual.time;
+            hVisual.moveBlend = gViewer.visual.moveBlend;
+            hVisual.attackPulse = gViewer.visual.attackPulse;
+            hVisual.skillPulse = gViewer.visual.skillPulse;
+            hVisual.ultPulse = gViewer.visual.ultPulse;
+            hVisual.faceDetail = gViewer.visual.faceDetail;
+            hVisual.faceTex = gViewer.arena.hironoFaceTex;
+
+            HironoModel::draw(hVisual);
             glPopMatrix();
             break;
         }

@@ -105,6 +105,12 @@
             <Option target="ViewerDebug" />
             <Option target="ViewerRelease" />
         </Unit>
+        <Unit filename="src/HironoModel.cpp">
+            <Option target="Debug" />
+            <Option target="Release" />
+            <Option target="ViewerDebug" />
+            <Option target="ViewerRelease" />
+        </Unit>
         <Unit filename="src/CGImageLoader.cpp">
             <Option target="Debug" />
             <Option target="Release" />
@@ -162,6 +168,7 @@
         <Unit filename="src/Common.hpp" />
         <Unit filename="src/Game.h" />
         <Unit filename="src/DimooModel.h" />
+        <Unit filename="src/HironoModel.h" />
         <Unit filename="src/DimooViewer.h" />
         <Unit filename="src/CGImageLoader.hpp" />
         <Unit filename="src/scene/Arena.h" />

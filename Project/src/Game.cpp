@@ -80,6 +80,11 @@ Game::Game() {
     dimooSkillPulse = 0.0f;
     dimooUltPulse = 0.0f;
     dimooButterflyTimer = 0.0f;
+
+    hironoMoveBlend = 0.0f;
+    hironoAttackPulse = 0.0f;
+    hironoSkillPulse = 0.0f;
+    hironoUltPulse = 0.0f;
 }
 
 Game::~Game() {}
@@ -107,6 +112,11 @@ void Game::init() {
     dimooSkillPulse = 0.0f;
     dimooUltPulse = 0.0f;
     dimooButterflyTimer = 0.0f;
+
+    hironoMoveBlend = 0.0f;
+    hironoAttackPulse = 0.0f;
+    hironoSkillPulse = 0.0f;
+    hironoUltPulse = 0.0f;
 
     particles.clear();
     dimooProjectiles.clear();
@@ -395,6 +405,7 @@ void Game::updateBattle(float dt) {
     lighting.updateCharacterLights(hironoX, hironoY, 0.0f, dimooX, dimooY, 0.0f, isHpLow);
 
     updateDimooVisuals(dt);
+    updateHironoVisuals(dt);
     handleBattleAttacks();
 }
 
@@ -459,6 +470,30 @@ DimooModel::DimooVisualState Game::buildDimooVisualState(float t) const {
     state.ultPulse = dimooUltPulse;
     state.faceDetail = 1.0f;
     state.faceTex = arena.dimooFaceTex;
+    return state;
+}
+
+void Game::updateHironoVisuals(float dt) {
+    float moveTarget = (input.hirono_left != input.hirono_right) ? 1.0f : 0.0f;
+    hironoMoveBlend += (moveTarget - hironoMoveBlend) * clamp(dt * 8.5f, 0.0f, 1.0f);
+    hironoAttackPulse = clamp(hironoAttackPulse - dt * 1.9f, 0.0f, 1.0f);
+    hironoSkillPulse = clamp(hironoSkillPulse - dt * 1.1f, 0.0f, 1.4f);
+    hironoUltPulse = clamp(hironoUltPulse - dt * 1.0f, 0.0f, 1.5f);
+}
+
+HironoModel::HironoVisualState Game::buildHironoVisualState(float t) const {
+    HironoModel::HironoVisualState state;
+    state.x = hironoX;
+    state.y = hironoY;
+    state.z = hironoZ;
+    state.facingRight = hironoFacingRight;
+    state.time = t;
+    state.moveBlend = hironoMoveBlend;
+    state.attackPulse = hironoAttackPulse;
+    state.skillPulse = hironoSkillPulse;
+    state.ultPulse = hironoUltPulse;
+    state.faceDetail = 1.0f;
+    state.faceTex = arena.hironoFaceTex;
     return state;
 }
 
@@ -559,6 +594,8 @@ void Game::handleBattleAttacks() {
 
 void Game::performHironoAttack(int attackLevel) {
     if (attackLevel == 1) {
+        hironoAttackPulse = 1.0f;
+        spawnDimooButterflies(hironoX + (hironoFacingRight ? 0.22f : -0.22f), hironoY + 0.56f, 0.0f, 4, 0.26f, false, 0.85f, 0.05f, 0.05f);
         if (std::abs(hironoX - dimooX) < 1.1f && std::abs(hironoY - dimooY) < 1.0f) {
             dimooHp -= 8.0f;
             spawnHitSparks(dimooX, dimooY + 0.5f, 0.0f, 15, 1.0f, 0.2f, 0.2f);
@@ -568,6 +605,9 @@ void Game::performHironoAttack(int attackLevel) {
             spawnHitSparks(hironoX + (hironoFacingRight ? 0.5f : -0.5f), hironoY + 0.5f, 0.0f, 3, 0.95f, 0.72f, 0.08f);
         }
     } else if (attackLevel == 2) {
+        hironoSkillPulse = 1.2f;
+        hironoAttackPulse = 0.6f;
+        spawnDimooButterflies(hironoX + (hironoFacingRight ? 0.35f : -0.35f), hironoY + 0.5f, 0.0f, 6, 0.35f, false, 0.95f, 0.72f, 0.08f);
         if (std::abs(hironoX - dimooX) < 2.0f && std::abs(hironoY - dimooY) < 1.2f) {
             dimooHp -= 16.0f;
             spawnHitSparks(dimooX, dimooY + 0.5f, 0.0f, 25, 1.0f, 0.85f, 0.2f);
@@ -577,6 +617,10 @@ void Game::performHironoAttack(int attackLevel) {
             spawnHitSparks(hironoX + (hironoFacingRight ? 0.8f : -0.8f), hironoY + 0.5f, 0.0f, 5, 1.0f, 0.85f, 0.2f);
         }
     } else if (attackLevel == 3) {
+        hironoUltPulse = 1.5f;
+        hironoSkillPulse = 1.35f;
+        hironoAttackPulse = 0.8f;
+        spawnDimooButterflies(hironoX, hironoY + 0.55f, hironoZ, 40, 0.88f, true, 0.85f, 0.05f, 0.05f);
         if (std::abs(hironoX - dimooX) < 3.0f && std::abs(hironoY - dimooY) < 2.0f) {
             dimooHp -= 30.0f;
             spawnHitSparks(dimooX, dimooY + 0.5f, 0.0f, 40, 0.95f, 0.95f, 1.0f);
@@ -648,129 +692,6 @@ void Game::performDimooAttack(int attackLevel) {
     }
 }
 
-// 绘制小野 (Hirono) 2D 纸片层级板羽人设
-static void drawHironoPaper(float x, float y, float z, bool facingRight, float t, GLuint faceTex) {
-    glPushMatrix();
-    glTranslatef(x, y, z);
-    
-    if (!facingRight) {
-        glScalef(-1.0f, 1.0f, 1.0f);
-    }
-    
-    // 呼吸微缩放动画
-    float scaleY = 1.0f + sin(t * 4.0f) * 0.02f;
-    glScalef(1.0f, scaleY, 1.0f);
-    
-    // 1. 红色披风层 (Z = -0.02f)
-    glColor3f(0.72f, 0.08f, 0.08f);
-    glBegin(GL_QUADS);
-    glNormal3f(0.0f, 0.0f, 1.0f);
-    glVertex3f(-0.35f, 0.0f, -0.02f);
-    glVertex3f( 0.15f, 0.0f, -0.02f);
-    glVertex3f( 0.05f, 0.7f, -0.02f);
-    glVertex3f(-0.25f, 0.7f, -0.02f);
-    glEnd();
-    
-    // 2. 绿色外套身体层 (Z = 0.0f)
-    glColor3f(0.15f, 0.38f, 0.22f);
-    glBegin(GL_QUADS);
-    glNormal3f(0.0f, 0.0f, 1.0f);
-    glVertex3f(-0.2f, 0.0f, 0.0f);
-    glVertex3f( 0.2f, 0.0f, 0.0f);
-    glVertex3f( 0.15f, 0.5f, 0.0f);
-    glVertex3f(-0.15f, 0.5f, 0.0f);
-    glEnd();
-    
-    // 3. 脸部贴图层 (Z = 0.02f)
-    if (faceTex) {
-        glEnable(GL_TEXTURE_2D);
-        glBindTexture(GL_TEXTURE_2D, faceTex);
-        glColor3f(1.0f, 1.0f, 1.0f);
-        glBegin(GL_QUADS);
-        glNormal3f(0.0f, 0.0f, 1.0f);
-        glTexCoord2f(0.0f, 0.0f); glVertex3f(-0.3f, 0.45f, 0.02f);
-        glTexCoord2f(1.0f, 0.0f); glVertex3f( 0.3f, 0.45f, 0.02f);
-        glTexCoord2f(1.0f, 1.0f); glVertex3f( 0.3f, 1.05f, 0.02f);
-        glTexCoord2f(0.0f, 1.0f); glVertex3f(-0.3f, 1.05f, 0.02f);
-        glEnd();
-        glDisable(GL_TEXTURE_2D);
-    } else {
-        glColor3f(0.98f, 0.88f, 0.82f);
-        glBegin(GL_QUADS);
-        glNormal3f(0.0f, 0.0f, 1.0f);
-        glVertex3f(-0.3f, 0.45f, 0.02f);
-        glVertex3f( 0.3f, 0.45f, 0.02f);
-        glVertex3f( 0.3f, 1.05f, 0.02f);
-        glVertex3f(-0.3f, 1.05f, 0.02f);
-        glEnd();
-    }
-    
-    // 橙黄色短发层 (Z = 0.03f)
-    glColor3f(0.95f, 0.72f, 0.08f);
-    glBegin(GL_QUADS);
-    glNormal3f(0.0f, 0.0f, 1.0f);
-    glVertex3f(-0.32f, 0.95f, 0.03f);
-    glVertex3f( 0.32f, 0.95f, 0.03f);
-    glVertex3f( 0.25f, 1.12f, 0.03f);
-    glVertex3f(-0.25f, 1.12f, 0.03f);
-    glEnd();
-    
-    // 4. 黄色围巾飘动层 (Z = 0.04f)
-    glColor3f(0.95f, 0.85f, 0.15f);
-    float scarfSway = sin(t * 5.0f) * 0.05f;
-    glBegin(GL_QUADS);
-    glNormal3f(0.0f, 0.0f, 1.0f);
-    glVertex3f(-0.15f, 0.48f, 0.04f);
-    glVertex3f( 0.15f, 0.48f, 0.04f);
-    glVertex3f( 0.15f + scarfSway, 0.58f, 0.04f);
-    glVertex3f(-0.15f + scarfSway, 0.58f, 0.04f);
-    glEnd();
-    
-    glBegin(GL_QUADS);
-    glNormal3f(0.0f, 0.0f, 1.0f);
-    glVertex3f(-0.1f, 0.48f, 0.04f);
-    glVertex3f( -0.05f, 0.48f, 0.04f);
-    glVertex3f( -0.3f + scarfSway, 0.35f, 0.04f);
-    glVertex3f( -0.35f + scarfSway, 0.35f, 0.04f);
-    glEnd();
-    
-    // 5. 玫瑰玻璃罩手捧层 (Z = 0.06f)
-    glEnable(GL_BLEND);
-    glDepthMask(GL_FALSE);
-    glColor4f(0.9f, 0.95f, 1.0f, 0.55f); // 玻璃罩半透明
-    glBegin(GL_QUADS);
-    glNormal3f(0.0f, 0.0f, 1.0f);
-    glVertex3f(-0.1f, 0.2f, 0.06f);
-    glVertex3f( 0.1f, 0.2f, 0.06f);
-    glVertex3f( 0.1f, 0.45f, 0.06f);
-    glVertex3f(-0.1f, 0.45f, 0.06f);
-    glEnd();
-    
-    // 木质底座
-    glColor4f(0.4f, 0.25f, 0.15f, 1.0f);
-    glBegin(GL_QUADS);
-    glNormal3f(0.0f, 0.0f, 1.0f);
-    glVertex3f(-0.12f, 0.17f, 0.07f);
-    glVertex3f( 0.12f, 0.17f, 0.07f);
-    glVertex3f( 0.12f, 0.2f, 0.07f);
-    glVertex3f(-0.12f, 0.2f, 0.07f);
-    glEnd();
-    
-    // 内部红玫瑰
-    glColor4f(0.85f, 0.05f, 0.05f, 1.0f);
-    glBegin(GL_TRIANGLES);
-    glNormal3f(0.0f, 0.0f, 1.0f);
-    glVertex3f(-0.03f, 0.25f, 0.065f);
-    glVertex3f( 0.03f, 0.25f, 0.065f);
-    glVertex3f( 0.0f,  0.33f, 0.065f);
-    glEnd();
-    
-    glDepthMask(GL_TRUE);
-    glDisable(GL_BLEND);
-    
-    glPopMatrix();
-}
-
 void Game::draw() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
@@ -789,7 +710,7 @@ void Game::draw() {
     glDepthMask(GL_TRUE);
     arena.drawOpaque();
 
-    // 在 BATTLE 或其他对战状态下，绘制 2D 纸片板羽角色与阴影
+    // 在 BATTLE 或其他对战状态下，绘制 3D 角色与阴影
     if (currentState != STATE_TITLE) {
         float t = glutGet(GLUT_ELAPSED_TIME) / 1000.0f;
         
@@ -835,13 +756,13 @@ void Game::draw() {
         glDisable(GL_BLEND);
         glEnable(GL_LIGHTING);
 
-        // 绘制纸片角色 (关闭背面剔除，防止翻转面消失)
+        // 绘制 3D 角色 (关闭背面剔除，防止翻转面消失)
         glDisable(GL_CULL_FACE);
         
-        // Player 1: Hirono 2D Paper
-        drawHironoPaper(hironoX, hironoY, hironoZ, hironoFacingRight, t, arena.hironoFaceTex);
+        // Player 1: Hirono 3D Model
+        HironoModel::draw(buildHironoVisualState(t));
 
-        // Player 2: Dimoo 2D Paper
+        // Player 2: Dimoo 3D Model
         DimooModel::draw(buildDimooVisualState(t));
         
         glEnable(GL_CULL_FACE);
