@@ -163,6 +163,7 @@ static void SetSwapEndian()
 }
 
 #ifdef _WIN32
+extern "C" void _fpreset(void);
 static bool gGdiplusInitialized = false;
 static ULONG_PTR gGdiplusToken = 0;
 

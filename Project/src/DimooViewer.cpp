@@ -18,6 +18,7 @@
 #include <windows.h>
 #include <gdiplus.h>
 #include <float.h>
+extern "C" void _fpreset(void);
 #endif
 
 namespace DimooViewerApp {
