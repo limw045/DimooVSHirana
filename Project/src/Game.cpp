@@ -848,6 +848,9 @@ void Game::draw() {
     }
 
     // 1. 绘制普通的非蝴蝶粒子 (Hit Sparks, Dust 等)
+    glDisable(GL_LIGHTING);
+    glEnable(GL_BLEND);
+    glDepthMask(GL_FALSE);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     for (const auto& p : particles) {
         if (p.kind != GameParticle::PARTICLE_BUTTERFLY) {
@@ -859,12 +862,11 @@ void Game::draw() {
         }
     }
     glPointSize(1.0f);
-    glDepthMask(GL_TRUE);
-    glDisable(GL_BLEND);
 
     // 2. 渲染 3D 蝴蝶粒子 (需要开启 Lighting 以正确展现 3D 材质)
     glEnable(GL_LIGHTING);
     glEnable(GL_BLEND);
+    glDepthMask(GL_FALSE); // 3D 蝴蝶使用半透明混合，不写深度缓冲区，防止深度排序及遮挡裁剪问题
     glBlendFunc(GL_SRC_ALPHA, GL_ONE);
     for (const auto& p : particles) {
         if (p.kind == GameParticle::PARTICLE_BUTTERFLY) {
@@ -896,6 +898,7 @@ void Game::draw() {
         glPopMatrix();
     }
 
+    glDepthMask(GL_TRUE); // 恢复深度写入
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     glDisable(GL_BLEND);
 
