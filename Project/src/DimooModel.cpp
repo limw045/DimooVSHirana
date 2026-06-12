@@ -835,9 +835,7 @@ void draw(const DimooVisualState& state) {
     float moveLean = walk * 4.0f * state.moveBlend;
     float bodyBreath = 1.0f + sin(t * 2.0f) * 0.014f;
 
-    glTranslatef(moveDrift, floatLift, 0.0f);
-    glRotatef(moveLean, 0.0f, 0.0f, 1.0f);
-    glScalef(bodyBreath, bodyBreath + state.moveBlend * 0.025f, bodyBreath);
+    glTranslatef(moveDrift, 0.0f, 0.0f);
 
     glPushAttrib(GL_ENABLE_BIT | GL_CURRENT_BIT);
     glDisable(GL_LIGHTING);
@@ -849,16 +847,34 @@ void draw(const DimooVisualState& state) {
     glPopMatrix();
     glPopAttrib();
 
-    drawSkillAura(state.skillPulse, t);
-    drawVineRing(state, t);
+    glPushMatrix();
+    // 1. 全局身体浮动和呼吸/倾斜 (Body Node 根空间)
+    glTranslatef(0.0f, 0.45f + floatLift, 0.0f);
+    glRotatef(moveLean, 0.0f, 0.0f, 1.0f);
+    glScalef(bodyBreath, bodyBreath + state.moveBlend * 0.025f, bodyBreath);
 
+    // 渲染身体躯干 (此时局部中心为 0.0, 0.0, 0.0)
     drawMascotBody(state, t);
 
+    // 2. 渲染头部节点 (Child of Body)
     glPushMatrix();
-    glTranslatef(0.0f, 0.45f + 0.008f * fabs(walk) * state.moveBlend, 0.0f);
+    // 增加行走颠簸偏移
+    float headBob = 0.008f * fabs(walk) * state.moveBlend;
+    glTranslatef(0.0f, headBob, 0.0f);
+    // 绘制头部与发丝
     drawHeadAndFace(state, t, moveLean);
     glPopMatrix();
 
+    // 3. 渲染藤蔓环节点 (Child of Body)
+    glPushMatrix();
+    glTranslatef(0.0f, 0.01f, 0.0f); // 相对身体中心微调
+    drawVineRing(state, t);
+    glPopMatrix();
+
+    glPopMatrix(); // 弹出 Body 根变换空间
+
+    // 以下特效和蝴蝶仍保持在世界空间渲染，以便于飞行和发散
+    drawSkillAura(state.skillPulse, t);
     drawButterflySystem(state, t);
     drawDreamParticleSwarm(state, t);
 
