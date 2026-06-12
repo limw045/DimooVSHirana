@@ -20,6 +20,7 @@ struct DimooVisualState {
     float moveBlend;
     float attackPulse;
     float skillPulse;
+    float ultPulse;
     float faceDetail;
     GLuint faceTex;
 
@@ -30,6 +31,7 @@ struct DimooVisualState {
           moveBlend(0.0f),
           attackPulse(0.0f),
           skillPulse(0.0f),
+          ultPulse(0.0f),
           faceDetail(1.0f),
           faceTex(0) {}
 };
