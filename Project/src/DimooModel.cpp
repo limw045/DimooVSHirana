@@ -688,10 +688,10 @@ static void drawVineRing(const DimooVisualState& state, float t) {
     // 自转与倾斜
     float rotationY = 0.0f;
     if (state.ultPulse > 0.0f) {
-        float p = (1.5f - state.ultPulse) / 1.5f;
+        float p = saturate((1.5f - state.ultPulse) / 1.5f);
         rotationY = p * 1080.0f;
     } else if (state.skillPulse > 0.0f) {
-        float p = (1.2f - state.skillPulse) / 1.2f;
+        float p = saturate((1.2f - state.skillPulse) / 1.2f);
         rotationY = p * 720.0f;
     }
 
