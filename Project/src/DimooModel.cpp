@@ -608,20 +608,17 @@ static void drawMascotBody(const DimooVisualState& state, float t) {
     float attackReach = state.attackPulse * 0.07f;
 
     setPearlMaterial(0.98f, 0.95f, 0.94f, 54.0f);
-    glPushMatrix();
-    glTranslatef(0.0f, 0.45f, 0.0f);
     drawEllipsoid3D(0.38f, 0.38f, 0.36f, 18, 24);
-    glPopMatrix();
 
     setPearlMaterial(0.99f, 0.91f, 0.90f, 42.0f);
     glPushMatrix();
-    glTranslatef(-0.36f, 0.35f + handBob, 0.07f);
+    glTranslatef(-0.36f, -0.10f + handBob, 0.07f);
     glRotatef(26.0f, 0.0f, 0.0f, 1.0f);
     drawEllipsoid3D(0.070f, 0.052f, 0.055f, 10, 14);
     glPopMatrix();
 
     glPushMatrix();
-    glTranslatef(0.35f + attackReach, 0.34f - handBob * 0.6f, 0.11f + state.attackPulse * 0.03f);
+    glTranslatef(0.35f + attackReach, -0.11f - handBob * 0.6f, 0.11f + state.attackPulse * 0.03f);
     glRotatef(-18.0f - state.attackPulse * 18.0f, 0.0f, 0.0f, 1.0f);
     drawEllipsoid3D(0.074f, 0.054f, 0.058f, 10, 14);
     glPopMatrix();
@@ -644,7 +641,7 @@ static void drawVineRing(const DimooVisualState& state, float t) {
                       + cos(angle * 6.0f + t * 0.8f) * 0.03f
                       - cos(angle) * drag;
         float x = cos(angle) * radius;
-        float y = 0.46f + sin(angle) * radius * yScale;
+        float y = 0.01f + sin(angle) * radius * yScale;
         nodes.push_back(Vec3(x, y, zOffset));
     }
 
