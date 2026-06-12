@@ -103,6 +103,7 @@ struct ViewerState {
         visual.moveBlend = 0.0f;
         visual.attackPulse = 0.0f;
         visual.skillPulse = 0.0f;
+        visual.ultPulse = 0.0f;
         visual.faceDetail = 1.0f;
         visual.faceTex = 0;
     }
@@ -452,6 +453,7 @@ static void drawInspectorUi() {
     ImGui::SliderFloat("Move blend", &gViewer.visual.moveBlend, 0.0f, 1.0f);
     ImGui::SliderFloat("Attack pulse", &gViewer.visual.attackPulse, 0.0f, 1.0f);
     ImGui::SliderFloat("Skill pulse", &gViewer.visual.skillPulse, 0.0f, 1.0f);
+    ImGui::SliderFloat("Ult pulse", &gViewer.visual.ultPulse, 0.0f, 1.0f);
     ImGui::SliderFloat("Face detail", &gViewer.visual.faceDetail, 0.0f, 1.0f);
 
     ImGui::SeparatorText("Face Wrap");

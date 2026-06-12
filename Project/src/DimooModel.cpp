@@ -615,6 +615,8 @@ static void drawHeadAndFace(const DimooVisualState& state, float t, float moveLe
 static void drawMascotBody(const DimooVisualState& state, float t) {
     float walk = sin(t * 5.6f);
     float handBob = sin(t * 2.8f) * 0.010f;
+    float skillFactor = clamp(state.skillPulse, 0.0f, 1.0f);
+    float ultFactor = clamp(state.ultPulse, 0.0f, 1.0f);
 
     // 1. 绘制身体躯干 (在 Body 局部空间的 0, 0, 0)
     setPearlMaterial(0.98f, 0.95f, 0.94f, 54.0f);
@@ -629,24 +631,20 @@ static void drawMascotBody(const DimooVisualState& state, float t) {
     
     // 动作混合旋转计算 (左手臂)
     float leftRotX = 0.0f;
-    float leftRotY = 0.0f;
     float leftRotZ = 26.0f; // 初始待机外摆角度
 
     // A. 行走摆动混合 (前后摆动)
     leftRotX += walk * 35.0f * state.moveBlend;
     
     // B. 技能抬手混合 (双手上举呼唤)
-    float skillFactor = clamp(state.skillPulse, 0.0f, 1.0f);
     leftRotZ = leftRotZ * (1.0f - skillFactor) + (-45.0f * skillFactor);
     leftRotX = leftRotX * (1.0f - skillFactor) + (-30.0f * skillFactor);
 
     // C. 大招张开双臂混合 (T-Pose 状)
-    float ultFactor = clamp(state.ultPulse, 0.0f, 1.0f);
     leftRotZ = leftRotZ * (1.0f - ultFactor) + (90.0f * ultFactor);
     leftRotX = leftRotX * (1.0f - ultFactor) + (0.0f * ultFactor);
 
     glRotatef(leftRotX, 1.0f, 0.0f, 0.0f);
-    glRotatef(leftRotY, 0.0f, 1.0f, 0.0f);
     glRotatef(leftRotZ, 0.0f, 0.0f, 1.0f);
     
     // 绘制手臂球体 (局部坐标设为 0,0,0)
@@ -660,7 +658,6 @@ static void drawMascotBody(const DimooVisualState& state, float t) {
 
     // 动作混合旋转计算 (右手臂)
     float rightRotX = 0.0f;
-    float rightRotY = 0.0f;
     float rightRotZ = -18.0f; // 初始待机外摆角度
 
     // A. 行走摆动混合 (与左臂呈相反相位)
@@ -679,7 +676,6 @@ static void drawMascotBody(const DimooVisualState& state, float t) {
     rightRotX = rightRotX * (1.0f - ultFactor) + (0.0f * ultFactor);
 
     glRotatef(rightRotX, 1.0f, 0.0f, 0.0f);
-    glRotatef(rightRotY, 0.0f, 1.0f, 0.0f);
     glRotatef(rightRotZ, 0.0f, 0.0f, 1.0f);
 
     drawEllipsoid3D(0.074f, 0.054f, 0.058f, 10, 14);

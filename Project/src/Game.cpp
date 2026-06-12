@@ -78,6 +78,7 @@ Game::Game() {
     dimooMoveBlend = 0.0f;
     dimooAttackPulse = 0.0f;
     dimooSkillPulse = 0.0f;
+    dimooUltPulse = 0.0f;
     dimooButterflyTimer = 0.0f;
 }
 
@@ -104,6 +105,7 @@ void Game::init() {
     dimooMoveBlend = 0.0f;
     dimooAttackPulse = 0.0f;
     dimooSkillPulse = 0.0f;
+    dimooUltPulse = 0.0f;
     dimooButterflyTimer = 0.0f;
 
     particles.clear();
@@ -362,6 +364,7 @@ void Game::updateDimooVisuals(float dt) {
     dimooMoveBlend += (moveTarget - dimooMoveBlend) * clamp(dt * 8.5f, 0.0f, 1.0f);
     dimooAttackPulse = clamp(dimooAttackPulse - dt * 1.9f, 0.0f, 1.0f);
     dimooSkillPulse = clamp(dimooSkillPulse - dt * 1.1f, 0.0f, 1.4f);
+    dimooUltPulse = clamp(dimooUltPulse - dt * 1.0f, 0.0f, 1.5f);
 
     dimooButterflyTimer -= dt;
     if (dimooButterflyTimer > 0.0f) {
@@ -398,6 +401,7 @@ DimooModel::DimooVisualState Game::buildDimooVisualState(float t) const {
     state.moveBlend = dimooMoveBlend;
     state.attackPulse = dimooAttackPulse;
     state.skillPulse = dimooSkillPulse;
+    state.ultPulse = dimooUltPulse;
     state.faceDetail = 1.0f;
     state.faceTex = arena.dimooFaceTex;
     return state;
@@ -554,6 +558,7 @@ void Game::performDimooAttack(int attackLevel) {
     } else if (attackLevel == 3) {
         dimooSkillPulse = 1.35f;
         dimooAttackPulse = 0.8f;
+        dimooUltPulse = 1.5f;
         spawnDimooButterflies(dimooX, dimooY + 0.72f, 0.0f, 18, 0.78f, true);
         if (std::abs(dimooX - hironoX) < 3.0f && std::abs(dimooY - hironoY) < 2.0f) {
             hironoHp -= 30.0f;

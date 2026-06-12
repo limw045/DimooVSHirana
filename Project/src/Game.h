@@ -79,6 +79,7 @@ public:
     float dimooMoveBlend;
     float dimooAttackPulse;
     float dimooSkillPulse;
+    float dimooUltPulse;
     float dimooButterflyTimer;
 
     void spawnHitSparks(float x, float y, float z, int count, float r, float g, float b);
