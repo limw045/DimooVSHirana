@@ -24,6 +24,40 @@ static void drawString(void* font, const std::string& str, float x, float y) {
     }
 }
 
+static void drawOutlineString(GLuint fontBase, const std::string& str, float x, float y, float r, float g, float b) {
+    if (!fontBase || str.empty()) return;
+    
+    // 1. 保存当前颜色与混合属性状态
+    glPushAttrib(GL_COLOR_BUFFER_BIT);
+    glEnable(GL_BLEND);
+    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+    
+    // 8 方向微偏置描边数组 (上下左右 + 4个对角方向)
+    float offset = 0.8f;
+    float offsets[8][2] = {
+        {-offset, 0.0f}, {offset, 0.0f}, {0.0f, -offset}, {0.0f, offset},
+        {-offset, -offset}, {offset, -offset}, {-offset, offset}, {offset, offset}
+    };
+    
+    // 绘制 8 方向黑色半透明影子描边
+    glColor4f(0.0f, 0.0f, 0.0f, 0.75f);
+    for (int i = 0; i < 8; i++) {
+        glRasterPos2f(x + offsets[i][0], y + offsets[i][1]);
+        glListBase(fontBase);
+        glCallLists((GLsizei)str.length(), GL_UNSIGNED_BYTE, str.c_str());
+    }
+
+    // 2. 绘制主体彩色字
+    glColor3f(r, g, b);
+    glRasterPos2f(x, y);
+    glListBase(fontBase);
+    glCallLists((GLsizei)str.length(), GL_UNSIGNED_BYTE, str.c_str());
+    
+    // 3. 恢复 OpenGL 属性状态
+    glPopAttrib();
+}
+
+
 // 辅助方法：绘制线框圆柱体（用于碰撞盒可视化）
 static void drawWireCylinder(float r, float h, int segments) {
     glBegin(GL_LINE_LOOP);
