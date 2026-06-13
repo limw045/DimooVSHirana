@@ -1170,42 +1170,62 @@ void Game::drawHUD() {
         }
         drawString(GLUT_BITMAP_HELVETICA_12, "Debug Keys: F4 (Colliders) | F5 (Skip Intro) | F6 (Crash Wall) | F7 (Damage P2) | F8 (AI) | F9 (Free Cam)", 380, 210);
     } else {
-        // 绘制血条背景边框 (KOF 街机风格)
-        glColor3f(0.12f, 0.12f, 0.12f);
+        // 启用混合以支持半透明和霓虹边缘抗锯齿
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        // 1. 绘制 P1 & P2 极简半透明底座 (Y: 650 - 662)
+        glColor4f(0.08f, 0.08f, 0.08f, 0.6f);
         glBegin(GL_QUADS);
-        // P1 血条黑边
-        glVertex2f(45, 640); glVertex2f(505, 640);
-        glVertex2f(505, 675); glVertex2f(45, 675);
-        // P2 血条黑边
-        glVertex2f(775, 640); glVertex2f(1235, 640);
-        glVertex2f(1235, 675); glVertex2f(775, 675);
+        // P1 底座
+        glVertex2f(50, 650); glVertex2f(500, 650);
+        glVertex2f(500, 662); glVertex2f(50, 662);
+        // P2 底座
+        glVertex2f(780, 650); glVertex2f(1230, 650);
+        glVertex2f(1230, 662); glVertex2f(780, 662);
         glEnd();
 
-        // 绘制空血红底
-        glColor3f(0.5f, 0.1f, 0.1f);
-        glBegin(GL_QUADS);
-        glVertex2f(50, 645); glVertex2f(500, 645);
-        glVertex2f(500, 670); glVertex2f(50, 670);
-        
-        glVertex2f(780, 645); glVertex2f(1230, 645);
-        glVertex2f(1230, 670); glVertex2f(780, 670);
-        glEnd();
-
-        // 绘制当前绿-黄-红渐变血条
-        float h1Pct = hironoHp / hironoMaxHp;
-        float h2Pct = dimooHp / dimooMaxHp;
+        // 2. 绘制血条填充 (Y: 650 - 662)
+        float h1Pct = clamp(hironoHp / hironoMaxHp, 0.0f, 1.0f);
+        float h2Pct = clamp(dimooHp / dimooMaxHp, 0.0f, 1.0f);
 
         glBegin(GL_QUADS);
-        // P1 血条 fill (左缩)
-        glColor3f(1.0f - h1Pct, h1Pct, 0.0f);
-        glVertex2f(50, 645); glVertex2f(50 + 450.0f * h1Pct, 645);
-        glVertex2f(50 + 450.0f * h1Pct, 670); glVertex2f(50, 670);
-        
-        // P2 血条 fill (右缩)
-        glColor3f(1.0f - h2Pct, h2Pct, 0.0f);
-        glVertex2f(1230 - 450.0f * h2Pct, 645); glVertex2f(1230, 645);
-        glVertex2f(1230, 670); glVertex2f(1230 - 450.0f * h2Pct, 670);
+        // P1 暖橙霓虹色 fill
+        glColor4f(1.0f, 0.4f, 0.1f, 1.0f);
+        glVertex2f(50, 650); glVertex2f(50 + 450.0f * h1Pct, 650);
+        glVertex2f(50 + 450.0f * h1Pct, 662); glVertex2f(50, 662);
+
+        // P2 冰蓝霓虹色 fill
+        glColor4f(0.2f, 0.75f, 1.0f, 1.0f);
+        glVertex2f(1230 - 450.0f * h2Pct, 650); glVertex2f(1230, 650);
+        glVertex2f(1230, 662); glVertex2f(1230 - 450.0f * h2Pct, 662);
         glEnd();
+
+        // 3. 绘制霓虹描边框
+        glEnable(GL_LINE_SMOOTH);
+        glLineWidth(1.5f);
+
+        // P1 霓虹框
+        glColor4f(1.0f, 0.45f, 0.15f, 0.8f);
+        glBegin(GL_LINE_LOOP);
+        glVertex2f(49, 663);
+        glVertex2f(501, 663);
+        glVertex2f(501, 649);
+        glVertex2f(49, 649);
+        glEnd();
+
+        // P2 霓虹框
+        glColor4f(0.3f, 0.8f, 1.0f, 0.8f);
+        glBegin(GL_LINE_LOOP);
+        glVertex2f(779, 663);
+        glVertex2f(1231, 663);
+        glVertex2f(1231, 649);
+        glVertex2f(779, 649);
+        glEnd();
+
+        glDisable(GL_LINE_SMOOTH);
+        glDisable(GL_BLEND);
+        glLineWidth(1.0f);
 
         // 绘制 P1 & P2 盲盒原画小头像
         if (arena.hironoFaceTex) {
@@ -1247,9 +1267,8 @@ void Game::drawHUD() {
         drawString(GLUT_BITMAP_HELVETICA_18, ssTime.str(), (matchTimer >= 10.0f) ? 623 : 633, 648);
 
         // 名字标签
-        glColor3f(1.0f, 1.0f, 1.0f);
-        drawString(GLUT_BITMAP_HELVETICA_12, "P1: HIRONO", 55, 680);
-        drawString(GLUT_BITMAP_HELVETICA_12, "P2: DIMOO", 1150, 680);
+        drawOutlineString(hFontSegoe, "P1: HIRONO", 55, 672, 1.0f, 0.7f, 0.3f);
+        drawOutlineString(hFontSegoe, "P2: DIMOO", 1135, 672, 0.3f, 0.8f, 1.0f);
 
         // 调试常驻信息与浮空相机提示
         if (camera.freeCam) {
