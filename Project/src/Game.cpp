@@ -1213,11 +1213,11 @@ void Game::drawHUD() {
         glColor4f(0.08f, 0.08f, 0.08f, 0.6f);
         glBegin(GL_QUADS);
         // P1 底座
-        glVertex2f(50, 650); glVertex2f(500, 650);
-        glVertex2f(500, 662); glVertex2f(50, 662);
+        glVertex2f(85, 650); glVertex2f(515, 650);
+        glVertex2f(515, 662); glVertex2f(85, 662);
         // P2 底座
-        glVertex2f(780, 650); glVertex2f(1230, 650);
-        glVertex2f(1230, 662); glVertex2f(780, 662);
+        glVertex2f(765, 650); glVertex2f(1195, 650);
+        glVertex2f(1195, 662); glVertex2f(765, 662);
         glEnd();
 
         // 2. 绘制血条填充 (Y: 650 - 662)
@@ -1227,13 +1227,13 @@ void Game::drawHUD() {
         glBegin(GL_QUADS);
         // P1 暖橙霓虹色 fill
         glColor4f(1.0f, 0.4f, 0.1f, 1.0f);
-        glVertex2f(50, 650); glVertex2f(50 + 450.0f * h1Pct, 650);
-        glVertex2f(50 + 450.0f * h1Pct, 662); glVertex2f(50, 662);
+        glVertex2f(85, 650); glVertex2f(85 + 430.0f * h1Pct, 650);
+        glVertex2f(85 + 430.0f * h1Pct, 662); glVertex2f(85, 662);
 
         // P2 冰蓝霓虹色 fill
         glColor4f(0.2f, 0.75f, 1.0f, 1.0f);
-        glVertex2f(1230 - 450.0f * h2Pct, 650); glVertex2f(1230, 650);
-        glVertex2f(1230, 662); glVertex2f(1230 - 450.0f * h2Pct, 662);
+        glVertex2f(1195 - 430.0f * h2Pct, 650); glVertex2f(1195, 650);
+        glVertex2f(1195, 662); glVertex2f(1195 - 430.0f * h2Pct, 662);
         glEnd();
 
         // 3. 绘制霓虹描边框
@@ -1243,19 +1243,19 @@ void Game::drawHUD() {
         // P1 霓虹框
         glColor4f(1.0f, 0.45f, 0.15f, 0.8f);
         glBegin(GL_LINE_LOOP);
-        glVertex2f(49, 663);
-        glVertex2f(501, 663);
-        glVertex2f(501, 649);
-        glVertex2f(49, 649);
+        glVertex2f(84, 663);
+        glVertex2f(516, 663);
+        glVertex2f(516, 649);
+        glVertex2f(84, 649);
         glEnd();
 
         // P2 霓虹框
         glColor4f(0.3f, 0.8f, 1.0f, 0.8f);
         glBegin(GL_LINE_LOOP);
-        glVertex2f(779, 663);
-        glVertex2f(1231, 663);
-        glVertex2f(1231, 649);
-        glVertex2f(779, 649);
+        glVertex2f(764, 663);
+        glVertex2f(1196, 663);
+        glVertex2f(1196, 649);
+        glVertex2f(764, 649);
         glEnd();
 
         glDisable(GL_LINE_SMOOTH);
@@ -1264,7 +1264,7 @@ void Game::drawHUD() {
 
         // 绘制 P1 & P2 盲盒圆形霓虹小头像
         if (arena.hironoHUDTex) {
-            drawTexturedCircle(arena.hironoHUDTex, 22.5f, 656.5f, 18.0f, 32);
+            drawTexturedCircle(arena.hironoHUDTex, 50.0f, 656.5f, 18.0f, 32);
             
             // 额外在圆形头像边缘画一圈极细的霓虹定位边框，使头像看起来更加浮动精致
             glEnable(GL_LINE_SMOOTH);
@@ -1272,12 +1272,12 @@ void Game::drawHUD() {
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             glColor4f(1.0f, 0.45f, 0.15f, 0.5f); // 暖橙色暗光圈
-            drawArc(22.5f, 656.5f, 18.0f, 0.0f, 360.0f, 32);
+            drawArc(50.0f, 656.5f, 18.0f, 0.0f, 360.0f, 32);
             glDisable(GL_LINE_SMOOTH);
         }
         
         if (arena.dimooHUDTex) {
-            drawTexturedCircle(arena.dimooHUDTex, 1257.5f, 656.5f, 18.0f, 32);
+            drawTexturedCircle(arena.dimooHUDTex, 1230.0f, 656.5f, 18.0f, 32);
             
             // 额外在圆形头像边缘画一圈极细的霓虹定位边框
             glEnable(GL_LINE_SMOOTH);
@@ -1285,7 +1285,7 @@ void Game::drawHUD() {
             glEnable(GL_BLEND);
             glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
             glColor4f(0.3f, 0.8f, 1.0f, 0.5f); // 冰蓝色暗光圈
-            drawArc(1257.5f, 656.5f, 18.0f, 0.0f, 360.0f, 32);
+            drawArc(1230.0f, 656.5f, 18.0f, 0.0f, 360.0f, 32);
             glDisable(GL_LINE_SMOOTH);
         }
 
@@ -1299,7 +1299,7 @@ void Game::drawHUD() {
 
         // P1 (Hirono) 冷却弧线绘制
         {
-            float cx = 22.5f;
+            float cx = 50.0f;
             float cy = 656.5f;
             float r = 25.0f;
 
@@ -1333,7 +1333,7 @@ void Game::drawHUD() {
                 // 在头像圆弧侧上方画出剩余时间
                 int sec = (int)std::ceil(hironoSkillCD);
                 std::string secStr = std::to_string(sec) + "s";
-                drawOutlineString(hFontSegoe, secStr, 5.0f, 668.0f, 1.0f, 0.45f, 0.15f);
+                drawOutlineString(hFontSegoe, secStr, 32.5f, 668.0f, 1.0f, 0.45f, 0.15f);
             }
 
             // 3. 大招 CD 弧 (240° ~ 340°)
@@ -1352,13 +1352,13 @@ void Game::drawHUD() {
                 // 在圆弧下方绘制剩余秒数
                 int sec = (int)std::ceil(hironoUltCD);
                 std::string secStr = std::to_string(sec) + "s";
-                drawOutlineString(hFontSegoe, secStr, 18.0f, 626.0f, 1.0f, 0.45f, 0.15f);
+                drawOutlineString(hFontSegoe, secStr, 45.5f, 626.0f, 1.0f, 0.45f, 0.15f);
             }
         }
 
         // P2 (Dimoo) 冷却弧线绘制
         {
-            float cx = 1257.5f;
+            float cx = 1230.0f;
             float cy = 656.5f;
             float r = 25.0f;
 
@@ -1392,7 +1392,7 @@ void Game::drawHUD() {
                 // 在头像圆弧侧上方画出剩余时间
                 int sec = (int)std::ceil(dimooSkillCD);
                 std::string secStr = std::to_string(sec) + "s";
-                drawOutlineString(hFontSegoe, secStr, 1265.0f, 668.0f, 0.3f, 0.8f, 1.0f);
+                drawOutlineString(hFontSegoe, secStr, 1237.5f, 668.0f, 0.3f, 0.8f, 1.0f);
             }
 
             // 3. 大招 CD 弧 (240° ~ 340°)
@@ -1411,7 +1411,7 @@ void Game::drawHUD() {
                 // 在圆弧下方绘制剩余秒数
                 int sec = (int)std::ceil(dimooUltCD);
                 std::string secStr = std::to_string(sec) + "s";
-                drawOutlineString(hFontSegoe, secStr, 1250.0f, 626.0f, 0.3f, 0.8f, 1.0f);
+                drawOutlineString(hFontSegoe, secStr, 1222.5f, 626.0f, 0.3f, 0.8f, 1.0f);
             }
         }
 
@@ -1451,13 +1451,27 @@ void Game::drawHUD() {
         // 绘制高质感描边数字
         std::stringstream ssTime;
         ssTime << (int)matchTimer;
-        float textX = (matchTimer >= 10.0f) ? 627.0f : 632.0f;
+        std::string timeStr = ssTime.str();
+        float textX = 640.0f;
+        if (timeStr.length() == 2) {
+            if (timeStr[0] == '1') {
+                textX = 640.0f - 12.0f; // e.g. "10"-"19"
+            } else {
+                textX = 640.0f - 17.5f; // e.g. "20"-"99"
+            }
+        } else {
+            if (timeStr == "1") {
+                textX = 640.0f - 5.0f;
+            } else {
+                textX = 640.0f - 9.0f;
+            }
+        }
         float textY = 644.0f;
-        drawOutlineString(hFontImpact, ssTime.str(), textX, textY, rCol, gCol, bCol);
+        drawOutlineString(hFontImpact, timeStr, textX, textY, rCol, gCol, bCol);
 
         // 名字标签
-        drawOutlineString(hFontSegoe, "P1: HIRONO", 55, 672, 1.0f, 0.7f, 0.3f);
-        drawOutlineString(hFontSegoe, "P2: DIMOO", 1135, 672, 0.3f, 0.8f, 1.0f);
+        drawOutlineString(hFontSegoe, "P1: HIRONO", 85, 672, 1.0f, 0.7f, 0.3f);
+        drawOutlineString(hFontSegoe, "P2: DIMOO", 1105, 672, 0.3f, 0.8f, 1.0f);
 
         // 调试常驻信息与浮空相机提示
         if (camera.freeCam) {
