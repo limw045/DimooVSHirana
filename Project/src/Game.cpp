@@ -587,12 +587,45 @@ void Game::handleBattleAttacks() {
         return;
     }
 
-    if (input.hirono_attackQueued) performHironoAttack(1);
-    if (input.hirono_skillQueued) performHironoAttack(2);
-    if (input.hirono_ultQueued) performHironoAttack(3);
-    if (input.dimoo_attackQueued) performDimooAttack(1);
-    if (input.dimoo_skillQueued) performDimooAttack(2);
-    if (input.dimoo_ultQueued) performDimooAttack(3);
+    // Hirono (P1)
+    if (input.hirono_attackQueued) {
+        if (hironoAttackCD <= 0.0f) {
+            performHironoAttack(1);
+            hironoAttackCD = 0.3f;
+        }
+    }
+    if (input.hirono_skillQueued) {
+        if (hironoSkillCD <= 0.0f) {
+            performHironoAttack(2);
+            hironoSkillCD = 3.0f;
+        }
+    }
+    if (input.hirono_ultQueued) {
+        if (hironoUltCD <= 0.0f) {
+            performHironoAttack(3);
+            hironoUltCD = 8.0f;
+        }
+    }
+
+    // Dimoo (P2)
+    if (input.dimoo_attackQueued) {
+        if (dimooAttackCD <= 0.0f) {
+            performDimooAttack(1);
+            dimooAttackCD = 0.3f;
+        }
+    }
+    if (input.dimoo_skillQueued) {
+        if (dimooSkillCD <= 0.0f) {
+            performDimooAttack(2);
+            dimooSkillCD = 3.0f;
+        }
+    }
+    if (input.dimoo_ultQueued) {
+        if (dimooUltCD <= 0.0f) {
+            performDimooAttack(3);
+            dimooUltCD = 8.0f;
+        }
+    }
 
     input.hirono_attackQueued = input.hirono_skillQueued = input.hirono_ultQueued = false;
     input.dimoo_attackQueued = input.dimoo_skillQueued = input.dimoo_ultQueued = false;
