@@ -87,9 +87,17 @@ Game::Game() {
     dimooAttackCD = 0.0f;
     dimooSkillCD = 0.0f;
     dimooUltCD = 0.0f;
+
+    hFontImpact = 0;
+    hFontSegoe = 0;
 }
 
-Game::~Game() {}
+Game::~Game() {
+    if (wglGetCurrentContext()) {
+        if (hFontImpact) glDeleteLists(hFontImpact, 256);
+        if (hFontSegoe) glDeleteLists(hFontSegoe, 256);
+    }
+}
 
 void Game::init() {
     currentState = STATE_TITLE;
@@ -128,6 +136,42 @@ void Game::init() {
     arena.init();
     camera.init();
     lighting.init();
+
+    // Delete existing lists if any to prevent leakage
+    if (hFontImpact) {
+        glDeleteLists(hFontImpact, 256);
+        hFontImpact = 0;
+    }
+    if (hFontSegoe) {
+        glDeleteLists(hFontSegoe, 256);
+        hFontSegoe = 0;
+    }
+
+    HDC hdc = wglGetCurrentDC();
+    if (hdc) {
+        // Impact 字体 (粗体，大小 32，抗锯齿)
+        HFONT fontImpact = CreateFontA(-32, 0, 0, 0, FW_BOLD, FALSE, FALSE, FALSE,
+                                       ANSI_CHARSET, OUT_TT_ONLY_PRECIS, CLIP_DEFAULT_PRECIS,
+                                       ANTIALIASED_QUALITY, FF_DONTCARE | DEFAULT_PITCH, "Impact");
+        HFONT oldFont = (HFONT)SelectObject(hdc, fontImpact);
+        hFontImpact = glGenLists(256);
+        wglUseFontBitmapsA(hdc, 0, 256, hFontImpact);
+        SelectObject(hdc, oldFont);
+        DeleteObject(fontImpact);
+
+        // Segoe UI 字体 (半粗体，大小 18，抗锯齿)
+        HFONT fontSegoe = CreateFontA(-18, 0, 0, 0, FW_SEMIBOLD, FALSE, FALSE, FALSE,
+                                     ANSI_CHARSET, OUT_TT_ONLY_PRECIS, CLIP_DEFAULT_PRECIS,
+                                     ANTIALIASED_QUALITY, FF_DONTCARE | DEFAULT_PITCH, "Segoe UI");
+        oldFont = (HFONT)SelectObject(hdc, fontSegoe);
+        hFontSegoe = glGenLists(256);
+        wglUseFontBitmapsA(hdc, 0, 256, hFontSegoe);
+        SelectObject(hdc, oldFont);
+        DeleteObject(fontSegoe);
+    } else {
+        hFontImpact = 0;
+        hFontSegoe = 0;
+    }
 }
 
 void Game::spawnHitSparks(float x, float y, float z, int count, float r, float g, float b) {

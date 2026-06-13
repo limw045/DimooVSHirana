@@ -89,6 +89,10 @@ public:
     float dimooSkillCD;
     float dimooUltCD;
 
+    // Windows Native Antialiased Fonts
+    GLuint hFontImpact;
+    GLuint hFontSegoe;
+
     struct Projectile {
         float x, y, z;
         float vx, vy, vz;
