@@ -1263,8 +1263,8 @@ void Game::drawHUD() {
         glLineWidth(1.0f);
 
         // 绘制 P1 & P2 盲盒圆形霓虹小头像
-        if (arena.hironoFaceTex) {
-            drawTexturedCircle(arena.hironoFaceTex, 22.5f, 656.5f, 18.0f, 32);
+        if (arena.hironoHUDTex) {
+            drawTexturedCircle(arena.hironoHUDTex, 22.5f, 656.5f, 18.0f, 32);
             
             // 额外在圆形头像边缘画一圈极细的霓虹定位边框，使头像看起来更加浮动精致
             glEnable(GL_LINE_SMOOTH);
@@ -1276,8 +1276,8 @@ void Game::drawHUD() {
             glDisable(GL_LINE_SMOOTH);
         }
         
-        if (arena.dimooFaceTex) {
-            drawTexturedCircle(arena.dimooFaceTex, 1257.5f, 656.5f, 18.0f, 32);
+        if (arena.dimooHUDTex) {
+            drawTexturedCircle(arena.dimooHUDTex, 1257.5f, 656.5f, 18.0f, 32);
             
             // 额外在圆形头像边缘画一圈极细的霓虹定位边框
             glEnable(GL_LINE_SMOOTH);

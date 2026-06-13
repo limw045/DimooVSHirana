@@ -202,6 +202,8 @@ public:
     unsigned int starrySkyTex;
     unsigned int hironoFaceTex;
     unsigned int dimooFaceTex;
+    unsigned int hironoHUDTex;
+    unsigned int dimooHUDTex;
 
     // Dedicated Arena boundary textures
     unsigned int floorTex;        ///< images/Floor.jpg

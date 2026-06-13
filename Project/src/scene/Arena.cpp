@@ -262,6 +262,8 @@ Arena::~Arena() {
     if (starrySkyTex) glDeleteTextures(1, &starrySkyTex);
     if (hironoFaceTex) glDeleteTextures(1, &hironoFaceTex);
     if (dimooFaceTex) glDeleteTextures(1, &dimooFaceTex);
+    if (hironoHUDTex) glDeleteTextures(1, &hironoHUDTex);
+    if (dimooHUDTex) glDeleteTextures(1, &dimooHUDTex);
     if (floorTex) glDeleteTextures(1, &floorTex);
     if (leftRightTex) glDeleteTextures(1, &leftRightTex);
     if (backTex) glDeleteTextures(1, &backTex);
@@ -279,7 +281,9 @@ void Arena::init() {
     roseLabelTex = loadTextureHelper("images/rose_label.jpg");
     starrySkyTex = loadTextureHelper("images/starry_sky.jpg");
     hironoFaceTex = loadTextureHelper("images/hirono_face.jpg");
-    dimooFaceTex = loadTextureHelper("images/dimoo_face.jpg");
+    dimooFaceTex = loadTextureHelper("images/dimoo_face.bmp");
+    hironoHUDTex = loadTextureHelper("images/hirono_avatar.jpg");
+    dimooHUDTex = loadTextureHelper("images/dimoo_face.jpg");
 }
 
 void Arena::update(float dt) {
