@@ -69,6 +69,28 @@ static void drawArc(float cx, float cy, float r, float start_deg, float end_deg,
     glEnd();
 }
 
+static void drawTexturedCircle(GLuint texture, float cx, float cy, float r, int segments = 32) {
+    if (!texture) return;
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D, texture);
+    glColor4f(1.0f, 1.0f, 1.0f, 1.0f);
+    
+    glBegin(GL_TRIANGLE_FAN);
+    glTexCoord2f(0.5f, 0.5f);
+    glVertex2f(cx, cy);
+    
+    for (int i = 0; i <= segments; ++i) {
+        float angle = i * 2.0f * (float)M_PI / segments;
+        float cosA = cos(angle);
+        float sinA = sin(angle);
+        glTexCoord2f(0.5f + cosA * 0.5f, 0.5f + sinA * 0.5f);
+        glVertex2f(cx + cosA * r, cy + sinA * r);
+    }
+    glEnd();
+    glDisable(GL_TEXTURE_2D);
+}
+
+
 
 // 辅助方法：绘制线框圆柱体（用于碰撞盒可视化）
 static void drawWireCylinder(float r, float h, int segments) {
@@ -1240,31 +1262,31 @@ void Game::drawHUD() {
         glDisable(GL_BLEND);
         glLineWidth(1.0f);
 
-        // 绘制 P1 & P2 盲盒原画小头像
+        // 绘制 P1 & P2 盲盒圆形霓虹小头像
         if (arena.hironoFaceTex) {
-            glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, arena.hironoFaceTex);
-            glColor3f(1.0f, 1.0f, 1.0f);
-            glBegin(GL_QUADS);
-            glTexCoord2f(0.0f, 0.0f); glVertex2f(5, 638);
-            glTexCoord2f(1.0f, 0.0f); glVertex2f(40, 638);
-            glTexCoord2f(1.0f, 1.0f); glVertex2f(40, 675);
-            glTexCoord2f(0.0f, 1.0f); glVertex2f(5, 675);
-            glEnd();
-            glDisable(GL_TEXTURE_2D);
+            drawTexturedCircle(arena.hironoFaceTex, 22.5f, 656.5f, 18.0f, 32);
+            
+            // 额外在圆形头像边缘画一圈极细的霓虹定位边框，使头像看起来更加浮动精致
+            glEnable(GL_LINE_SMOOTH);
+            glLineWidth(1.0f);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glColor4f(1.0f, 0.45f, 0.15f, 0.5f); // 暖橙色暗光圈
+            drawArc(22.5f, 656.5f, 18.0f, 0.0f, 360.0f, 32);
+            glDisable(GL_LINE_SMOOTH);
         }
         
         if (arena.dimooFaceTex) {
-            glEnable(GL_TEXTURE_2D);
-            glBindTexture(GL_TEXTURE_2D, arena.dimooFaceTex);
-            glColor3f(1.0f, 1.0f, 1.0f);
-            glBegin(GL_QUADS);
-            glTexCoord2f(0.0f, 0.0f); glVertex2f(1240, 638);
-            glTexCoord2f(1.0f, 0.0f); glVertex2f(1275, 638);
-            glTexCoord2f(1.0f, 1.0f); glVertex2f(1275, 675);
-            glTexCoord2f(0.0f, 1.0f); glVertex2f(1240, 675);
-            glEnd();
-            glDisable(GL_TEXTURE_2D);
+            drawTexturedCircle(arena.dimooFaceTex, 1257.5f, 656.5f, 18.0f, 32);
+            
+            // 额外在圆形头像边缘画一圈极细的霓虹定位边框
+            glEnable(GL_LINE_SMOOTH);
+            glLineWidth(1.0f);
+            glEnable(GL_BLEND);
+            glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glColor4f(0.3f, 0.8f, 1.0f, 0.5f); // 冰蓝色暗光圈
+            drawArc(1257.5f, 656.5f, 18.0f, 0.0f, 360.0f, 32);
+            glDisable(GL_LINE_SMOOTH);
         }
 
         // 4. 绘制头像外圈 CD 弧线

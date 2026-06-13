@@ -279,7 +279,7 @@ void Arena::init() {
     roseLabelTex = loadTextureHelper("images/rose_label.jpg");
     starrySkyTex = loadTextureHelper("images/starry_sky.jpg");
     hironoFaceTex = loadTextureHelper("images/hirono_face.jpg");
-    dimooFaceTex = loadTextureHelper("images/dimoo_face.bmp");
+    dimooFaceTex = loadTextureHelper("images/dimoo_face.jpg");
 }
 
 void Arena::update(float dt) {
