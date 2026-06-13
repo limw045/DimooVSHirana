@@ -81,6 +81,13 @@ public:
     float dimooSkillPulse;
     float dimooUltPulse;
     float dimooButterflyTimer;
+    // 冷却时间状态量 (秒)
+    float hironoAttackCD;
+    float hironoSkillCD;
+    float hironoUltCD;
+    float dimooAttackCD;
+    float dimooSkillCD;
+    float dimooUltCD;
 
     struct Projectile {
         float x, y, z;

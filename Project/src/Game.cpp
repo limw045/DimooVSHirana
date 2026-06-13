@@ -80,6 +80,13 @@ Game::Game() {
     dimooSkillPulse = 0.0f;
     dimooUltPulse = 0.0f;
     dimooButterflyTimer = 0.0f;
+
+    hironoAttackCD = 0.0f;
+    hironoSkillCD = 0.0f;
+    hironoUltCD = 0.0f;
+    dimooAttackCD = 0.0f;
+    dimooSkillCD = 0.0f;
+    dimooUltCD = 0.0f;
 }
 
 Game::~Game() {}
@@ -107,6 +114,13 @@ void Game::init() {
     dimooSkillPulse = 0.0f;
     dimooUltPulse = 0.0f;
     dimooButterflyTimer = 0.0f;
+
+    hironoAttackCD = 0.0f;
+    hironoSkillCD = 0.0f;
+    hironoUltCD = 0.0f;
+    dimooAttackCD = 0.0f;
+    dimooSkillCD = 0.0f;
+    dimooUltCD = 0.0f;
 
     particles.clear();
     dimooProjectiles.clear();
