@@ -1396,17 +1396,42 @@ void Game::drawHUD() {
         glLineWidth(1.0f);
         glDisable(GL_LINE_SMOOTH);
 
-        // 绘制中央倒计时框
-        glColor3f(0.15f, 0.15f, 0.15f);
-        glBegin(GL_QUADS);
-        glVertex2f(615, 635); glVertex2f(665, 635);
-        glVertex2f(665, 675); glVertex2f(615, 675);
-        glEnd();
+        // 绘制悬浮霓虹计时器圆环
+        glEnable(GL_LINE_SMOOTH);
+        glLineWidth(1.5f);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        glColor3f(1.0f, 0.8f, 0.0f);
+        float baseR = 24.0f;
+        float rCol, gCol, bCol, aCol;
+        float drawR = baseR;
+
+        if (matchTimer > 10.0f) {
+            rCol = 0.8f;
+            gCol = 0.95f;
+            bCol = 1.0f;
+            aCol = 0.7f;
+        } else {
+            rCol = 1.0f;
+            gCol = 0.15f;
+            bCol = 0.15f;
+            aCol = 1.0f;
+            float pulse = 1.0f + 0.12f * std::abs(sin(matchTimer * 3.14159f * 2.0f));
+            drawR = baseR * pulse;
+        }
+
+        glColor4f(rCol, gCol, bCol, aCol);
+        drawArc(640.0f, 656.0f, drawR, 0.0f, 360.0f);
+
+        glDisable(GL_LINE_SMOOTH);
+        glLineWidth(1.0f);
+
+        // 绘制高质感描边数字
         std::stringstream ssTime;
         ssTime << (int)matchTimer;
-        drawString(GLUT_BITMAP_HELVETICA_18, ssTime.str(), (matchTimer >= 10.0f) ? 623 : 633, 648);
+        float textX = (matchTimer >= 10.0f) ? 627.0f : 632.0f;
+        float textY = 644.0f;
+        drawOutlineString(hFontImpact, ssTime.str(), textX, textY, rCol, gCol, bCol);
 
         // 名字标签
         drawOutlineString(hFontSegoe, "P1: HIRONO", 55, 672, 1.0f, 0.7f, 0.3f);
