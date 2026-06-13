@@ -409,6 +409,33 @@ void Game::updateBattle(float dt) {
     lighting.updateCharacterLights(hironoX, hironoY, 0.0f, dimooX, dimooY, 0.0f, isHpLow);
 
     updateDimooVisuals(dt);
+
+    if (hironoAttackCD > 0.0f) {
+        hironoAttackCD -= dt;
+        if (hironoAttackCD < 0.0f) hironoAttackCD = 0.0f;
+    }
+    if (hironoSkillCD > 0.0f) {
+        hironoSkillCD -= dt;
+        if (hironoSkillCD < 0.0f) hironoSkillCD = 0.0f;
+    }
+    if (hironoUltCD > 0.0f) {
+        hironoUltCD -= dt;
+        if (hironoUltCD < 0.0f) hironoUltCD = 0.0f;
+    }
+
+    if (dimooAttackCD > 0.0f) {
+        dimooAttackCD -= dt;
+        if (dimooAttackCD < 0.0f) dimooAttackCD = 0.0f;
+    }
+    if (dimooSkillCD > 0.0f) {
+        dimooSkillCD -= dt;
+        if (dimooSkillCD < 0.0f) dimooSkillCD = 0.0f;
+    }
+    if (dimooUltCD > 0.0f) {
+        dimooUltCD -= dt;
+        if (dimooUltCD < 0.0f) dimooUltCD = 0.0f;
+    }
+
     handleBattleAttacks();
 }
 
