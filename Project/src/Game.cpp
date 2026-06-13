@@ -57,6 +57,18 @@ static void drawOutlineString(GLuint fontBase, const std::string& str, float x, 
     glPopAttrib();
 }
 
+static void drawArc(float cx, float cy, float r, float start_deg, float end_deg, int segments = 30) {
+    if (segments <= 0) segments = 1;
+    glBegin(GL_LINE_STRIP);
+    for (int i = 0; i <= segments; ++i) {
+        float t = (float)i / (float)segments;
+        float deg = start_deg + (end_deg - start_deg) * t;
+        float rad = deg * (float)M_PI / 180.0f;
+        glVertex2f(cx + cos(rad) * r, cy + sin(rad) * r);
+    }
+    glEnd();
+}
+
 
 // 辅助方法：绘制线框圆柱体（用于碰撞盒可视化）
 static void drawWireCylinder(float r, float h, int segments) {
@@ -1133,6 +1145,7 @@ void Game::draw() {
 }
 
 void Game::drawHUD() {
+    glPushAttrib(GL_ENABLE_BIT | GL_COLOR_BUFFER_BIT | GL_LINE_BIT);
     // 切换到正交投影渲染 2D 文本和状态
     glMatrixMode(GL_PROJECTION);
     glPushMatrix();
@@ -1254,6 +1267,135 @@ void Game::drawHUD() {
             glDisable(GL_TEXTURE_2D);
         }
 
+        // 4. 绘制头像外圈 CD 弧线
+        glEnable(GL_LINE_SMOOTH);
+        glLineWidth(1.5f);
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        float breathingFactor = 0.8f + 0.2f * std::abs(sin(matchTimer * 4.0f));
+
+        // P1 (Hirono) 冷却弧线绘制
+        {
+            float cx = 22.5f;
+            float cy = 656.5f;
+            float r = 25.0f;
+
+            // 1. 普攻 CD 弧 (0° ~ 100°)
+            if (hironoAttackCD <= 0.0f) {
+                glColor4f(1.0f * breathingFactor, 0.45f * breathingFactor, 0.15f * breathingFactor, 0.8f);
+                drawArc(cx, cy, r, 0.0f, 100.0f);
+            } else {
+                float pct = hironoAttackCD / 0.3f;
+                // 已冷却段
+                glColor4f(1.0f, 0.45f, 0.15f, 0.4f);
+                drawArc(cx, cy, r, 0.0f, (1.0f - pct) * 100.0f);
+                // 未冷却段
+                glColor4f(0.25f, 0.25f, 0.25f, 0.4f);
+                drawArc(cx, cy, r, (1.0f - pct) * 100.0f, 100.0f);
+            }
+
+            // 2. 小技能 CD 弧 (120° ~ 220°)
+            if (hironoSkillCD <= 0.0f) {
+                glColor4f(1.0f * breathingFactor, 0.45f * breathingFactor, 0.15f * breathingFactor, 0.8f);
+                drawArc(cx, cy, r, 120.0f, 220.0f);
+            } else {
+                float skillPct = hironoSkillCD / 3.0f;
+                // 已冷却段
+                glColor4f(1.0f, 0.45f, 0.15f, 0.4f);
+                drawArc(cx, cy, r, 120.0f, 120.0f + (1.0f - skillPct) * 100.0f);
+                // 未冷却段
+                glColor4f(0.25f, 0.25f, 0.25f, 0.4f);
+                drawArc(cx, cy, r, 120.0f + (1.0f - skillPct) * 100.0f, 220.0f);
+
+                // 在头像圆弧侧上方画出剩余时间
+                int sec = (int)std::ceil(hironoSkillCD);
+                std::string secStr = std::to_string(sec) + "s";
+                drawOutlineString(hFontSegoe, secStr, 5.0f, 668.0f, 1.0f, 0.45f, 0.15f);
+            }
+
+            // 3. 大招 CD 弧 (240° ~ 340°)
+            if (hironoUltCD <= 0.0f) {
+                glColor4f(1.0f * breathingFactor, 0.45f * breathingFactor, 0.15f * breathingFactor, 0.8f);
+                drawArc(cx, cy, r, 240.0f, 340.0f);
+            } else {
+                float ultPct = hironoUltCD / 8.0f;
+                // 已冷却段
+                glColor4f(1.0f, 0.45f, 0.15f, 0.4f);
+                drawArc(cx, cy, r, 240.0f, 240.0f + (1.0f - ultPct) * 100.0f);
+                // 未冷却段
+                glColor4f(0.25f, 0.25f, 0.25f, 0.4f);
+                drawArc(cx, cy, r, 240.0f + (1.0f - ultPct) * 100.0f, 340.0f);
+
+                // 在圆弧下方绘制剩余秒数
+                int sec = (int)std::ceil(hironoUltCD);
+                std::string secStr = std::to_string(sec) + "s";
+                drawOutlineString(hFontSegoe, secStr, 18.0f, 626.0f, 1.0f, 0.45f, 0.15f);
+            }
+        }
+
+        // P2 (Dimoo) 冷却弧线绘制
+        {
+            float cx = 1257.5f;
+            float cy = 656.5f;
+            float r = 25.0f;
+
+            // 1. 普攻 CD 弧 (0° ~ 100°)
+            if (dimooAttackCD <= 0.0f) {
+                glColor4f(0.3f * breathingFactor, 0.8f * breathingFactor, 1.0f * breathingFactor, 0.8f);
+                drawArc(cx, cy, r, 0.0f, 100.0f);
+            } else {
+                float pct = dimooAttackCD / 0.3f;
+                // 已冷却段
+                glColor4f(0.3f, 0.8f, 1.0f, 0.4f);
+                drawArc(cx, cy, r, 0.0f, (1.0f - pct) * 100.0f);
+                // 未冷却段
+                glColor4f(0.25f, 0.25f, 0.25f, 0.4f);
+                drawArc(cx, cy, r, (1.0f - pct) * 100.0f, 100.0f);
+            }
+
+            // 2. 小技能 CD 弧 (120° ~ 220°)
+            if (dimooSkillCD <= 0.0f) {
+                glColor4f(0.3f * breathingFactor, 0.8f * breathingFactor, 1.0f * breathingFactor, 0.8f);
+                drawArc(cx, cy, r, 120.0f, 220.0f);
+            } else {
+                float skillPct = dimooSkillCD / 3.0f;
+                // 已冷却段
+                glColor4f(0.3f, 0.8f, 1.0f, 0.4f);
+                drawArc(cx, cy, r, 120.0f, 120.0f + (1.0f - skillPct) * 100.0f);
+                // 未冷却段
+                glColor4f(0.25f, 0.25f, 0.25f, 0.4f);
+                drawArc(cx, cy, r, 120.0f + (1.0f - skillPct) * 100.0f, 220.0f);
+
+                // 在头像圆弧侧上方画出剩余时间
+                int sec = (int)std::ceil(dimooSkillCD);
+                std::string secStr = std::to_string(sec) + "s";
+                drawOutlineString(hFontSegoe, secStr, 1265.0f, 668.0f, 0.3f, 0.8f, 1.0f);
+            }
+
+            // 3. 大招 CD 弧 (240° ~ 340°)
+            if (dimooUltCD <= 0.0f) {
+                glColor4f(0.3f * breathingFactor, 0.8f * breathingFactor, 1.0f * breathingFactor, 0.8f);
+                drawArc(cx, cy, r, 240.0f, 340.0f);
+            } else {
+                float ultPct = dimooUltCD / 8.0f;
+                // 已冷却段
+                glColor4f(0.3f, 0.8f, 1.0f, 0.4f);
+                drawArc(cx, cy, r, 240.0f, 240.0f + (1.0f - ultPct) * 100.0f);
+                // 未冷却段
+                glColor4f(0.25f, 0.25f, 0.25f, 0.4f);
+                drawArc(cx, cy, r, 240.0f + (1.0f - ultPct) * 100.0f, 340.0f);
+
+                // 在圆弧下方绘制剩余秒数
+                int sec = (int)std::ceil(dimooUltCD);
+                std::string secStr = std::to_string(sec) + "s";
+                drawOutlineString(hFontSegoe, secStr, 1250.0f, 626.0f, 0.3f, 0.8f, 1.0f);
+            }
+        }
+
+        glLineWidth(1.0f);
+        glDisable(GL_LINE_SMOOTH);
+
         // 绘制中央倒计时框
         glColor3f(0.15f, 0.15f, 0.15f);
         glBegin(GL_QUADS);
@@ -1332,6 +1474,7 @@ void Game::drawHUD() {
     glMatrixMode(GL_PROJECTION);
     glPopMatrix();
     glMatrixMode(GL_MODELVIEW);
+    glPopAttrib();
 }
 
 void Game::handleInput(unsigned char key) {
